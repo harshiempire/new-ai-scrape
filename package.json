@@ -26,10 +26,12 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.0",
     "convex": "^1.28.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "mustache": "^4.2.0",
+    "prisma": "^6.19.0",
     "zod": "^4.1.12"
   },
   "type": "module"
