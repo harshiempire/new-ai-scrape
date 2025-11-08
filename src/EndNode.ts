@@ -5,8 +5,16 @@ import { getNodeInputs } from "./utils";
 export class EndNode extends Node {
   name = "EndNode";
 
-  constructor({ id, label }: { id: string; label: string }) {
-    super({ id, label, type: "end" });
+  constructor({
+    id,
+    label,
+    outputSchema,
+  }: {
+    id: string;
+    label: string;
+    outputSchema?: import("zod").ZodTypeAny;
+  }) {
+    super({ id, label, type: "end", outputSchema });
     this.description = "Marks the end of workflow execution";
   }
 

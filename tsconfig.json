@@ -1,20 +1,20 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "commonjs",
-    "lib": ["ES2020"],
-    "outDir": "./dist",
-    "rootDir": "./",
-    "strict": true,
+    "target": "ES6",
+    "module": "ES6",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist", // This is where compiled .js files will go
+    "rootDir": "./src", // This is where your TypeScript files are located
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "moduleResolution": "node"
+    "strictNullChecks": true
   },
-  "include": ["./**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*.ts", // Includes all files in src folder
+    "src/routes/auth/index.ts"
+  ],
+  "exclude": [
+    "node_modules" // Exclude node_modules
+  ]
 }

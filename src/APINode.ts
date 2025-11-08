@@ -1,8 +1,8 @@
 import { Node } from "./Node";
 import { ExecutionContext } from "./ExecutionContext";
 import { getNodeInputs } from "./utils";
-import Mustache from "mustache";
 import z from "zod";
+import Mustache from "mustache";
 
 /**
  * APINode - Makes HTTP requests with full configurability
@@ -33,21 +33,25 @@ export class APINode extends Node {
     id,
     label,
     props,
+    outputSchema,
   }: {
     id: string;
     label: string;
     props?: Record<string, any>;
+    outputSchema?: import("zod").ZodTypeAny;
   }) {
-    super({ id, label, type: "api", props });
+    super({ id, label, type: "api", props, outputSchema });
     this.description = "Makes HTTP API calls";
 
-    // Default output schema for API responses
-    this.outputSchema = z
-      .object({
-        status: z.number().optional(),
-        data: z.any(),
-      })
-      .passthrough(); // Allow additional fields
+    // Only set default output schema if workflow didn't provide one
+    if (this.outputSchema === z.any()) {
+      this.outputSchema = z
+        .object({
+          status: z.number().optional(),
+          data: z.any(),
+        })
+        .passthrough(); // Allow additional fields
+    }
   }
 
   async execute(context: ExecutionContext): Promise<void> {

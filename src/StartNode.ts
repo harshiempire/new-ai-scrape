@@ -5,12 +5,23 @@ import { z } from "zod";
 export class StartNode extends Node {
   name = "StartNode";
 
-  constructor({ id, label }: { id: string; label: string }) {
-    super({ id, label, type: "start" });
+  constructor({
+    id,
+    label,
+    outputSchema,
+  }: {
+    id: string;
+    label: string;
+    outputSchema?: import("zod").ZodTypeAny;
+  }) {
+    super({ id, label, type: "start", outputSchema });
     this.description = "Starts workflow execution by injecting initial inputs";
 
     // StartNode accepts any input, outputs whatever it receives
-    this.outputSchema = z.any();
+    // Only set default if workflow didn't provide one
+    if (this.outputSchema === z.any()) {
+      this.outputSchema = z.any();
+    }
   }
 
   execute(context: ExecutionContext): void {

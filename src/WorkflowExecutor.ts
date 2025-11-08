@@ -15,14 +15,13 @@ export class WorkflowExecutor {
     // Initialize nodes
     const nodes = new Map<string, Node>();
     workflow.nodes.forEach((nodeDef) => {
-      const node = NodeFactory.createNode(nodeDef);
-
-      // Set output schema if provided in workflow definition
+      // Parse schema from workflow and pass into factory so node can initialize with it
+      let schema;
       if (nodeDef.outputSchema) {
-        const schema = parseSchemaDefinition(nodeDef.outputSchema);
-        node.setOutputSchema(schema);
+        schema = parseSchemaDefinition(nodeDef.outputSchema);
       }
 
+      const node = NodeFactory.createNode(nodeDef, schema);
       nodes.set(node.id, node);
     });
 

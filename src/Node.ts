@@ -8,30 +8,31 @@ export abstract class Node {
   type: string;
   description: string;
   props: Record<string, any>;
-
-  // Schema definitions
-  inputSchema: Map<string, z.ZodTypeAny>; // Map<edgeId, schema>
-  outputSchema: z.ZodTypeAny; // Single schema for all outputs
+  inputSchema: Map<string, z.ZodTypeAny>;
+  outputSchema: z.ZodTypeAny;
 
   constructor({
     id,
     label,
     type,
     props,
+    outputSchema,
   }: {
     id: string;
     label: string;
     type: string;
     props?: Record<string, any>;
+    outputSchema?: z.ZodTypeAny;
   }) {
     this.id = id;
     this.label = label;
     this.type = type;
     this.description = "";
     this.props = props || {};
-    // Initialize with default schemas (override in subclasses)
     this.inputSchema = new Map();
-    this.outputSchema = z.any(); // Default: accept anything
+    // Initialize output schema from constructor param if provided, otherwise default to any
+    console.log("outputSchema", type, outputSchema);
+    this.outputSchema = outputSchema ?? z.any();
   }
 
   abstract execute(context: ExecutionContext): Promise<void> | void;
