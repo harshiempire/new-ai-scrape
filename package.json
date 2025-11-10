@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "ts-node src/example.ts",
-    "start": "node dist/example.js",
+    "start": "nodemon dist/index.js",
     "clean": "rm -rf dist",
     "watch": "tsc --watch"
   },
@@ -33,6 +33,5 @@
     "mustache": "^4.2.0",
     "prisma": "^6.19.0",
     "zod": "^4.1.12"
-  },
-  "type": "module"
+  }
 }

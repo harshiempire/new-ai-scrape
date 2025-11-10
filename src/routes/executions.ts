@@ -2,7 +2,7 @@ import express from "express";
 import { prisma } from "../lib/prisma";
 import { z } from "zod";
 
-const router = express.Router();
+const exectionRouter = express.Router();
 
 // Schema validation
 const executionSchema = z.object({
@@ -11,7 +11,7 @@ const executionSchema = z.object({
 });
 
 // POST /api/executions
-router.post("/", async (req, res) => {
+exectionRouter.post("/", async (req, res) => {
   try {
     const validation = executionSchema.safeParse(req.body);
     if (!validation.success) {
@@ -44,7 +44,7 @@ router.post("/", async (req, res) => {
 });
 
 // GET /api/executions
-router.get("/", async (req, res) => {
+exectionRouter.get("/", async (req, res) => {
   try {
     const { workflowId, status } = req.query;
 
@@ -68,7 +68,7 @@ router.get("/", async (req, res) => {
 });
 
 // PUT /api/executions/:id
-router.put("/:id", async (req, res) => {
+exectionRouter.put("/:id", async (req, res) => {
   try {
     const { status, completedAt, executionTime, variablePool } = req.body;
 
@@ -81,7 +81,10 @@ router.put("/:id", async (req, res) => {
         executionData: variablePool
           ? {
               upsert: {
-                create: { variablePool },
+                create: {
+                  initialInputs: {},
+                  variablePool,
+                },
                 update: { variablePool },
               },
             }
@@ -99,4 +102,4 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-export default router;
+export default exectionRouter;

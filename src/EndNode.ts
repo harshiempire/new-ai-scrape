@@ -1,6 +1,5 @@
 import { Node } from "./Node";
 import { ExecutionContext } from "./ExecutionContext";
-import { getNodeInputs } from "./utils";
 
 export class EndNode extends Node {
   name = "EndNode";
@@ -18,8 +17,8 @@ export class EndNode extends Node {
     this.description = "Marks the end of workflow execution";
   }
 
-  execute(context: ExecutionContext): void {
-    const inputs = getNodeInputs(context, this.id);
+  async execute(context: ExecutionContext) {
+    const inputs = await this.getNodeInputs(context, this.id);
     console.log(
       `[EndNode ${this.label}] Workflow completed with inputs:`,
       Object.fromEntries(inputs)

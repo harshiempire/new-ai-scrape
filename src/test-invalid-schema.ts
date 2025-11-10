@@ -33,7 +33,11 @@ const initialInputs = {
   userId: "not-a-number", // ❌ Should fail validation
 };
 
-const executor = new WorkflowExecutor();
-executor.execute(workflow, initialInputs).catch((error) => {
+const executor = new WorkflowExecutor(
+  workflow,
+  initialInputs,
+  "test-execution"
+);
+executor.execute().catch((error) => {
   console.error("Expected validation error:", error.message);
 });

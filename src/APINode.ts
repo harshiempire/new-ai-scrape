@@ -1,6 +1,5 @@
 import { Node } from "./Node";
 import { ExecutionContext } from "./ExecutionContext";
-import { getNodeInputs } from "./utils";
 import z from "zod";
 import Mustache from "mustache";
 
@@ -55,9 +54,14 @@ export class APINode extends Node {
   }
 
   async execute(context: ExecutionContext): Promise<void> {
-    console.log(`\n[APINode ${this.label}] Starting execution`);
+    console.log(`\n🔄 [APINode ${this.label}] Starting execution`);
+    console.log("━".repeat(50));
 
-    const inputs = getNodeInputs(context, this.id); // Now validates automatically!
+    const inputs = await this.getNodeInputs(context, this.id); // Now validates automatically!
+    console.log(
+      `📥 Input Data:`,
+      JSON.stringify(Object.fromEntries(inputs), null, 2)
+    );
 
     const templateModel: Record<string, any> = {};
     inputs.forEach((data, edgeId) => {
@@ -66,6 +70,7 @@ export class APINode extends Node {
 
     const method = (this.props.method || "GET").toUpperCase();
     let url: string | undefined = this.props.url;
+    console.log(`🛠️ Request Method: ${method}`);
 
     if (url) {
       url = Mustache.render(url, templateModel);
@@ -134,7 +139,7 @@ export class APINode extends Node {
       throw error;
     }
 
-    this.sendOutput(responseData, context); // Validates before sending!
+    await this.sendOutput(responseData, context); // Validates before sending!
   }
 
   toJSON(): Record<string, any> {

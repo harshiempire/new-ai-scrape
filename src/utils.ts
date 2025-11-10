@@ -1,28 +1,6 @@
-import { ExecutionContext } from "./ExecutionContext";
 import { Node as WorkflowNode } from "./Node";
 import { Edge, Indegree } from "./types";
 import { z } from "zod";
-
-/**
- * Get inputs for a node from the VariablePool WITHOUT direct validation
- * (validation happens inside node.execute when it processes inputs)
- */
-export function getNodeInputs(
-  context: ExecutionContext,
-  nodeId: string
-): Map<string, any> {
-  const incomingEdges = context.edges.filter((edge) => edge.target === nodeId);
-  const inputs = new Map<string, any>();
-
-  incomingEdges.forEach((edge) => {
-    const data = context.variablePool.get(edge.id);
-    if (data !== undefined) {
-      inputs.set(edge.id, data);
-    }
-  });
-
-  return inputs;
-}
 
 /**
  * Helper to validate input data against schema (used by nodes)

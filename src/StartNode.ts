@@ -24,12 +24,14 @@ export class StartNode extends Node {
     }
   }
 
-  execute(context: ExecutionContext): void {
+  async execute(context: ExecutionContext) {
+    console.log(`\n🚀 [StartNode ${this.label}] Starting workflow execution`);
+    console.log("━".repeat(50));
     console.log(
-      `[StartNode ${this.label}] Injecting initial inputs:`,
-      context.initialInputs
+      "\n📥 Initial inputs:",
+      JSON.stringify(context.initialInputs, null, 2)
     );
-    this.sendOutput(context.initialInputs, context);
+    await this.sendOutput(context.initialInputs, context);
   }
 
   toJSON(): Record<string, any> {

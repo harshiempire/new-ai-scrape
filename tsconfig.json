@@ -1,20 +1,36 @@
 {
   "compilerOptions": {
-    "target": "ES6",
-    "module": "ES6",
+    /* Base Options */
+    "target": "es2022",
+    "lib": ["es2022", "esnext", "dom"],
+    "module": "commonjs",
     "moduleResolution": "node",
-    "esModuleInterop": true,
+
+    /* Strict Type Checking */
+    "strict": false,
     "skipLibCheck": true,
-    "outDir": "./dist", // This is where compiled .js files will go
-    "rootDir": "./src", // This is where your TypeScript files are located
+
+    /* Module Resolution */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "strictNullChecks": true
+    "forceConsistentCasingInFileNames": true,
+
+    /* Advanced Features */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "downlevelIteration": true,
+
+    /* Emit */
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "sourceMap": true,
+
+    /* Additional Checks */
+    "noImplicitAny": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
-  "include": [
-    "src/**/*.ts", // Includes all files in src folder
-    "src/routes/auth/index.ts"
-  ],
-  "exclude": [
-    "node_modules" // Exclude node_modules
-  ]
+  "include": ["src/**/*", "all-in-one.ts"],
+  "exclude": ["node_modules", "dist"]
 }

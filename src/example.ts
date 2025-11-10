@@ -44,5 +44,9 @@ const initialInputs = {
   city: "Berlin",
 };
 
-const executor = new WorkflowExecutor();
-executor.execute(workflow, initialInputs).catch(console.error);
+const executor = new WorkflowExecutor(
+  workflow,
+  initialInputs,
+  "example-execution"
+);
+executor.execute().catch(console.error);

@@ -1,21 +1,37 @@
+import { ExecutionData } from "@prisma/client";
 import { ExecutionContext } from "./ExecutionContext";
 import { Node } from "./Node";
 import { NodeFactory } from "./NodeFactory";
 import { WorkflowDefinition } from "./types";
 import { buildIndegree, hasCycle, parseSchemaDefinition } from "./utils";
+import { exec } from "child_process";
 
 export class WorkflowExecutor {
-  async execute(
+  workflow: WorkflowDefinition;
+  initialInputs: any;
+  executionDataId: string;
+
+  constructor(
     workflow: WorkflowDefinition,
-    initialInputs: any
-  ): Promise<void> {
-    console.log("=== Workflow Execution Started ===");
-    console.log("Initial Inputs:", initialInputs);
+    initialInputs: any,
+    executionDataId: string
+  ) {
+    this.workflow = workflow;
+    this.initialInputs = initialInputs;
+    this.executionDataId = executionDataId;
+  }
+
+  async execute(): Promise<void> {
+    console.log("\n📋 ========= WORKFLOW EXECUTION STARTED =========");
+    console.log(
+      "\n📥 Initial Inputs:",
+      JSON.stringify(this.initialInputs, null, 2)
+    );
 
     // Initialize nodes
     const nodes = new Map<string, Node>();
-    workflow.nodes.forEach((nodeDef) => {
-      // Parse schema from workflow and pass into factory so node can initialize with it
+    this.workflow.nodes.forEach((nodeDef) => {
+      // Parse schema from this.workflow and pass into factory so node can initialize with it
       let schema;
       if (nodeDef.outputSchema) {
         schema = parseSchemaDefinition(nodeDef.outputSchema);
@@ -26,7 +42,7 @@ export class WorkflowExecutor {
     });
 
     // Populate input schemas from connected source nodes
-    workflow.edges.forEach((edge) => {
+    this.workflow.edges.forEach((edge) => {
       const sourceNode = nodes.get(edge.source);
       const targetNode = nodes.get(edge.target);
 
@@ -37,12 +53,17 @@ export class WorkflowExecutor {
     });
 
     // Check for cycles
-    if (hasCycle(nodes, workflow.edges)) {
+    if (hasCycle(nodes, this.workflow.edges)) {
       throw new Error("Workflow contains cycles! DAG validation failed.");
     }
 
-    const indegree = buildIndegree(nodes, workflow.edges);
-    const context = new ExecutionContext(workflow.edges, initialInputs, nodes);
+    const indegree = buildIndegree(nodes, this.workflow.edges);
+    const context = new ExecutionContext(
+      this.workflow.edges,
+      this.initialInputs,
+      nodes,
+      this.executionDataId
+    );
 
     const queue: string[] = [];
     indegree.forEach((degree, nodeId) => {
@@ -55,22 +76,32 @@ export class WorkflowExecutor {
       throw new Error("No starting nodes found");
     }
 
-    // Execute workflow
+    // Execute this.workflow
     while (queue.length > 0) {
-      const nodeId = queue.shift()!;
-      const node = nodes.get(nodeId)!;
+      const nodeId = queue.shift();
+      const node = nodes.get(nodeId);
 
       console.log(`\n--- Executing Node: ${node.label} (${node.type}) ---`);
       context.currentNodeId = nodeId;
 
       try {
+        console.log(`\n🔄 Executing Node: ${node.label} (${node.type})`);
+        console.log("━".repeat(50));
         await node.execute(context);
+        console.log(`✅ Node ${node.label} executed successfully`);
       } catch (error) {
-        console.error(`Error executing node ${node.label}:`, error);
+        console.error(`\n❌ Error executing node ${node.label}:`);
+        console.error("━".repeat(50));
+        if (error instanceof Error) {
+          console.error(`Error message: ${error.message}`);
+          console.error(`Stack trace:\n${error.stack}`);
+        } else {
+          console.error("Unknown error:", error);
+        }
         throw error;
       }
 
-      const outgoingEdges = workflow.edges.filter(
+      const outgoingEdges = this.workflow.edges.filter(
         (edge) => edge.source === nodeId
       );
 
@@ -100,6 +131,6 @@ export class WorkflowExecutor {
     }
 
     console.log("\n=== Workflow Execution Completed ===");
-    context.printVariablePool();
+    await context.printVariablePool(this.executionDataId);
   }
 }

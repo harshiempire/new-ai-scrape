@@ -53,23 +53,39 @@ export class ExecutionContext {
 
   nodes?: Map<string, Node>; // Add reference to nodes for validation
 
-  constructor(edges: Edge[], initialInputs: any, nodes: Map<string, Node>) {
+  executionDataId?: string;
+
+  constructor(
+    edges: Edge[],
+    initialInputs: any,
+    nodes: Map<string, Node>,
+    executionDataId: string
+  ) {
     this.variablePool = new Map(); // EMPTY at start, populated during execution
     this.edges = edges;
     this.initialInputs = initialInputs;
     this.currentNodeId = "";
     this.activeEdges = new Set();
     this.nodes = nodes;
+    this.executionDataId = executionDataId;
   }
 
   /**
    * Debug helper: Print current variablePool state
    */
-  printVariablePool(): void {
-    console.log("\n=== VariablePool State ===");
-    this.variablePool.forEach((data, edgeId) => {
-      console.log(`Edge ${edgeId}:`, data);
+  async printVariablePool(executionDataId: string) {
+    console.log("\n📊 ========= VARIABLE POOL STATE =========");
+    const executionData = await prisma.executionData.findUnique({
+      where: { id: executionDataId },
+      select: {
+        variablePool: true,
+      },
     });
-    console.log("========================\n");
+    if (!(executionData && executionData.variablePool)) {
+      console.log("(Empty)");
+    } else {
+      console.log(JSON.stringify(executionData.variablePool, null, 2));
+    }
+    console.log("═".repeat(40) + "\n");
   }
 }

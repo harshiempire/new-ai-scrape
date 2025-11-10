@@ -25,7 +25,7 @@ export class WaitNode extends Node {
 
     // For now, WaitNode simply passes props or an optional "message" forward
     const output = this.props?.output ?? this.props?.message ?? null;
-    this.sendOutput(output, context);
+    await this.sendOutput(output, context);
   }
 
   toJSON(): Record<string, any> {

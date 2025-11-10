@@ -1,6 +1,7 @@
 import { ExecutionContext } from "./ExecutionContext";
 import { Edge } from "./types";
 import { z } from "zod";
+import { prisma } from "./lib/prisma";
 
 export abstract class Node {
   id: string;
@@ -31,11 +32,11 @@ export abstract class Node {
     this.props = props || {};
     this.inputSchema = new Map();
     // Initialize output schema from constructor param if provided, otherwise default to any
-    console.log("outputSchema", type, outputSchema);
+    // console.log("outputSchema", type, outputSchema);
     this.outputSchema = outputSchema ?? z.any();
   }
 
-  abstract execute(context: ExecutionContext): Promise<void> | void;
+  abstract execute(context: ExecutionContext): Promise<void>;
 
   abstract toJSON(): Record<string, any>;
 
@@ -62,26 +63,28 @@ export abstract class Node {
     const schema = this.inputSchema.get(edgeId);
 
     if (!schema) {
-      // No schema defined, skip validation
+      console.log(
+        `[Node ${this.type.toUpperCase()}] [${this.label}] No input schema defined for edge ${edgeId}, skipping validation`
+      );
       return data;
     }
 
     try {
       const validated = schema.parse(data);
       console.log(
-        `[${this.label}] ✓ Input validation passed for edge ${edgeId}`
+        `[Node ${this.type.toUpperCase()}] [${this.label}] ✅ Input validation passed for edge ${edgeId}`
       );
       return validated;
     } catch (error) {
       if (error instanceof z.ZodError) {
         console.error(
-          `[${this.label}] ✗ Input validation failed for edge ${edgeId}:`,
-          error.issues
+          `[Node ${this.type.toUpperCase()}] [${this.label}] ❌ Input validation failed for edge ${edgeId}:`,
+          JSON.stringify(error.issues, null, 2)
         );
         throw new Error(
           `Input validation failed for ${
             this.label
-          } on edge ${edgeId}: ${JSON.stringify(error.issues)}`
+          } on edge ${edgeId}: ${JSON.stringify(error.issues, null, 2)}`
         );
       }
       throw error;
@@ -94,22 +97,34 @@ export abstract class Node {
   protected validateOutput(data: any): any {
     // If no specific schema, return as-is
     if (this.outputSchema === z.any() || !this.outputSchema) {
+      console.log(
+        `[Node ${this.type.toUpperCase()}] [${this.label}] No output schema defined, skipping validation`
+      );
       return data;
     }
 
     try {
       const validated = this.outputSchema.parse(data);
-      console.log(`[${this.label}] ✓ Output validation passed`);
+      console.log(
+        `[Node ${this.type.toUpperCase()}] [${this.label}] ✅ Output validation passed`
+      );
+      if (typeof validated === "object") {
+        console.log("Output Data:", JSON.stringify(validated, null, 2));
+      } else {
+        console.log("Output Data:", validated);
+      }
       return validated;
     } catch (error) {
       if (error instanceof z.ZodError) {
         console.error(
-          `[${this.label}] ✗ Output validation failed:`,
-          error.issues
+          `[Node ${this.type.toUpperCase()}] [${this.label}] ❌ Output validation failed:`,
+          JSON.stringify(error.issues, null, 2)
         );
         throw new Error(
           `Output validation failed for ${this.label}: ${JSON.stringify(
-            error.issues
+            error.issues,
+            null,
+            2
           )}`
         );
       }
@@ -117,24 +132,128 @@ export abstract class Node {
     }
   }
 
-  protected sendOutput(
+  /**
+   * Get inputs for a node from the VariablePool WITHOUT direct validation
+   * (validation happens inside node.execute when it processes inputs)
+   */
+  protected async getNodeInputs(context: ExecutionContext, nodeId: string) {
+    const incomingEdges = context.edges.filter(
+      (edge) => edge.target === nodeId
+    );
+    const inputs = new Map<string, any>();
+
+    const executionDataId = context.executionDataId;
+    if (!executionDataId) {
+      throw new Error("Execution data ID is missing in the context");
+    }
+
+    const exectionData = await prisma.executionData.findUnique({
+      where: { id: executionDataId },
+      select: {
+        variablePool: true,
+      },
+    });
+    if (!exectionData) {
+      throw new Error("Execution data not found");
+    }
+    console.log(executionDataId, exectionData);
+
+    incomingEdges.forEach((edge) => {
+      const data = exectionData.variablePool as Record<string, any>;
+      const value = data[edge.id];
+      if (value !== undefined) {
+        inputs.set(edge.id, value);
+      }
+    });
+
+    return inputs;
+  }
+
+  protected async sendOutput(
     output: any,
     context: ExecutionContext,
     edgeFilter?: (edge: Edge) => boolean
-  ): void {
-    // Validate output before sending
-    const validatedOutput = this.validateOutput(output);
-
-    const outgoingEdges = context.edges.filter(
-      (edge) => edge.source === this.id && (!edgeFilter || edgeFilter(edge))
+  ) {
+    console.log(
+      `\n📤 [Node ${this.type.toUpperCase()}] [${this.label}] Preparing to send output...`
     );
 
-    outgoingEdges.forEach((edge) => {
-      context.variablePool.set(edge.id, validatedOutput);
+    // Validate output before sending
+    try {
       console.log(
-        `Node [${this.label}] pushed validated data to edge ${edge.id}`
+        `[Node ${this.type.toUpperCase()}] [${this.label}] 🔍 Validating output data...`
       );
-    });
+      const validatedOutput = this.validateOutput(output);
+
+      const outgoingEdges = context.edges.filter(
+        (edge) => edge.source === this.id && (!edgeFilter || edgeFilter(edge))
+      );
+
+      console.log(
+        `[Node ${this.type.toUpperCase()}] [${this.label}] 📡 Found ${outgoingEdges.length} outgoing edge(s)`
+      );
+
+      const executionDataId = context.executionDataId;
+      if (!executionDataId) {
+        throw new Error("Execution data ID is missing in the context");
+      }
+
+      const exectionData = await prisma.executionData.findUnique({
+        where: { id: executionDataId },
+        select: {
+          variablePool: true,
+        },
+      });
+      if (!exectionData) {
+        throw new Error("Execution data not found");
+      }
+      console.log(executionDataId, exectionData);
+      let newVariablePool = exectionData.variablePool;
+
+      for (let edge of outgoingEdges) {
+        console.log(
+          `\n[Node ${this.type.toUpperCase()}] [${this.label}] 🔄 Processing edge ${edge.id}...`
+        );
+
+        const data = exectionData.variablePool as Record<string, any>;
+        newVariablePool = { ...data, [edge.id]: validatedOutput };
+
+        console.log(
+          `[Node ${this.type.toUpperCase()}] [${this.label}] 💾 Updating execution data in database... with the new VariablePool ${JSON.stringify(newVariablePool, null, 2)}`
+        );
+
+        if (typeof validatedOutput === "object") {
+          console.log(
+            `[Node ${this.type.toUpperCase()}] [${this.label}] 📦 Data sent:`,
+            JSON.stringify(validatedOutput, null, 2)
+          );
+        } else {
+          console.log(
+            `[Node ${this.type.toUpperCase()}] [${this.label}] 📦 Data sent:`,
+            validatedOutput
+          );
+        }
+      }
+      const updatedData = await prisma.executionData.update({
+        where: { id: executionDataId },
+        data: { variablePool: newVariablePool },
+      });
+      console.log(
+        `✅ [Node ${this.type.toUpperCase()}] [${this.label}] Successfully sent data to edges - updated data is ${JSON.stringify(updatedData.variablePool, null, 2)}`
+      );
+    } catch (error) {
+      console.error(
+        `\n❌ [Node ${this.type.toUpperCase()}] [${this.label}] Error sending output:`
+      );
+      console.error("━".repeat(50));
+      if (error instanceof Error) {
+        console.error(`🔴 Error message: ${error.message}`);
+        console.error(`📜 Stack trace:\n${error.stack}`);
+      } else {
+        console.error("🔴 Unknown error:", error);
+      }
+      throw error; // Re-throw to allow proper error handling up the chain
+    }
   }
 
   /**
