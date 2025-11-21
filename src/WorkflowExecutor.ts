@@ -1,10 +1,8 @@
-import { ExecutionData } from "@prisma/client";
 import { ExecutionContext } from "./ExecutionContext";
 import { Node } from "./Node";
 import { NodeFactory } from "./NodeFactory";
 import { WorkflowDefinition } from "./types";
 import { buildIndegree, hasCycle, parseSchemaDefinition } from "./utils";
-import { exec } from "child_process";
 
 export class WorkflowExecutor {
   workflow: WorkflowDefinition;
@@ -98,7 +96,12 @@ export class WorkflowExecutor {
         } else {
           console.error("Unknown error:", error);
         }
-        throw error;
+        throw {
+          executionDataId: this.executionDataId,
+          nodeId: nodeId,
+          message: error instanceof Error ? error.message : "Unknown error",
+          stack: error instanceof Error ? error.stack : undefined,
+        };
       }
 
       const outgoingEdges = this.workflow.edges.filter(

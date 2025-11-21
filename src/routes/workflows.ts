@@ -60,11 +60,11 @@ workflowRouter.post("/", async (req, res) => {
 workflowRouter.get("/", async (req, res) => {
   try {
     const workflows = await prisma.workflow.findMany({
-      include: {
-        executions: {
-          orderBy: { startedAt: "desc" },
-          take: 5, // Get last 5 executions
-        },
+      select: {
+        createdAt: true,
+        name: true,
+        updatedAt: true,
+        id: true,
       },
     });
     res.json(workflows);
@@ -79,13 +79,13 @@ workflowRouter.get("/:id", async (req, res) => {
   try {
     const workflow = await prisma.workflow.findUnique({
       where: { id: req.params.id },
-      include: {
-        executions: {
-          include: {
-            executionData: true,
-          },
-          orderBy: { startedAt: "desc" },
-        },
+      select: {
+        nodes: true,
+        edges: true,
+        createdAt: true,
+        name: true,
+        updatedAt: true,
+        id: true,
       },
     });
 
@@ -97,6 +97,19 @@ workflowRouter.get("/:id", async (req, res) => {
   } catch (error) {
     console.error("Error fetching workflow:", error);
     res.status(500).json({ error: "Failed to fetch workflow" });
+  }
+});
+
+workflowRouter.get("/:id/executions", async (req, res) => {
+  try {
+    const executions = await prisma.execution.findMany({
+      where: { workflowId: req.params.id },
+    });
+
+    return res.json(executions);
+  } catch (error) {
+    console.error("Error fetching executions for workflow:", error);
+    res.status(500).json({ error: "Failed to fetch executions for workflow" });
   }
 });
 
@@ -137,6 +150,8 @@ workflowRouter.delete("/:id", async (req, res) => {
 // POST /api/workflows/:id/run
 workflowRouter.post("/:id/run", async (req, res) => {
   try {
+    const startTime = Date.now();
+
     const validation = runWorkflowSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(400).json({ error: validation.error });
@@ -175,6 +190,14 @@ workflowRouter.post("/:id/run", async (req, res) => {
       },
     });
 
+    console.log(
+      `\n=== Starting Workflow Execution: ${workflow.name} (Run #${nextRunNumber}) ===`
+    );
+    console.log(`\n Execution ID: ${execution.id}`);
+    console.log(
+      `\n Execution which is created ${JSON.stringify(execution, null, 2)}`
+    );
+
     // Initialize workflow executor
     if (execution.executionData && execution.executionData.id !== null) {
       const executor = new WorkflowExecutor(
@@ -185,6 +208,15 @@ workflowRouter.post("/:id/run", async (req, res) => {
 
       // Execute workflow
       const result = await executor.execute();
+      const endTime = Date.now();
+      await prisma.execution.update({
+        where: { id: execution.id },
+        data: {
+          status: "Completed",
+          completedAt: new Date(),
+          executionTime: endTime - startTime,
+        },
+      });
 
       return res.json({
         message: "Workflow executed successfully",
@@ -197,6 +229,46 @@ workflowRouter.post("/:id/run", async (req, res) => {
     }
   } catch (error) {
     console.error("Error running workflow:", error);
+    if (error.nodeId !== undefined) {
+      const executionData = await prisma.executionData.findFirst({
+        where: { id: error.executionDataId },
+        include: {
+          execution: true,
+        },
+      });
+      console.log("\nerror execution", executionData);
+
+      const newVariablePool = {
+        ...(executionData.variablePool as Record<string, any>),
+        [error.nodeId]: {
+          message: error.message,
+          stack: error.stack,
+        },
+      };
+      // await prisma.execution.update({
+      //   where: {
+      //     id: executionData.execution.id,
+      //   },
+      //   data: {
+      //     status: "Failed",
+      //     completedAt: new Date(),
+      //   },
+      // });
+      await prisma.executionData.update({
+        where: {
+          id: error.executionDataId,
+        },
+        data: {
+          variablePool: newVariablePool,
+          execution: {
+            update: {
+              status: "Failed",
+              completedAt: new Date(),
+            },
+          },
+        },
+      });
+    }
     res.status(500).json({ error: "Failed to execute workflow \n" + error });
   }
 });

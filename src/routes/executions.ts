@@ -102,4 +102,26 @@ exectionRouter.put("/:id", async (req, res) => {
   }
 });
 
+// GET /api/execution/data/:id
+
+exectionRouter.get("/data/:id", async (req, res) => {
+  try {
+    const executionId = req.params.id;
+
+    const execution = await prisma.execution.findFirst({
+      where: {
+        id: executionId,
+      },
+      select: {
+        executionData: true,
+      },
+    });
+
+    res.json(execution);
+  } catch (error) {
+    console.error("Error updating execution:", error);
+    res.status(500).json({ error: "Failed to update execution" });
+  }
+});
+
 export default exectionRouter;

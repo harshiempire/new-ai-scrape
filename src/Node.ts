@@ -136,9 +136,9 @@ export abstract class Node {
    * Get inputs for a node from the VariablePool WITHOUT direct validation
    * (validation happens inside node.execute when it processes inputs)
    */
-  protected async getNodeInputs(context: ExecutionContext, nodeId: string) {
+  protected async getNodeInputs(context: ExecutionContext) {
     const incomingEdges = context.edges.filter(
-      (edge) => edge.target === nodeId
+      (edge) => edge.target === this.id
     );
     const inputs = new Map<string, any>();
 
@@ -160,7 +160,7 @@ export abstract class Node {
 
     incomingEdges.forEach((edge) => {
       const data = exectionData.variablePool as Record<string, any>;
-      const value = data[edge.id];
+      const value = data[edge.source];
       if (value !== undefined) {
         inputs.set(edge.id, value);
       }
@@ -185,55 +185,46 @@ export abstract class Node {
       );
       const validatedOutput = this.validateOutput(output);
 
-      const outgoingEdges = context.edges.filter(
-        (edge) => edge.source === this.id && (!edgeFilter || edgeFilter(edge))
-      );
-
-      console.log(
-        `[Node ${this.type.toUpperCase()}] [${this.label}] 📡 Found ${outgoingEdges.length} outgoing edge(s)`
-      );
-
       const executionDataId = context.executionDataId;
       if (!executionDataId) {
         throw new Error("Execution data ID is missing in the context");
       }
 
-      const exectionData = await prisma.executionData.findUnique({
+      const executionData = await prisma.executionData.findUnique({
         where: { id: executionDataId },
         select: {
           variablePool: true,
         },
       });
-      if (!exectionData) {
+      if (!executionData) {
         throw new Error("Execution data not found");
       }
-      console.log(executionDataId, exectionData);
-      let newVariablePool = exectionData.variablePool;
+      console.log(executionDataId, executionData);
+      let newVariablePool = executionData.variablePool;
 
-      for (let edge of outgoingEdges) {
+      console.log(
+        `\n[Node ${this.type.toUpperCase()}] [${this.label}] 🔄 Processing node ${this.id}...`
+      );
+
+      const data = executionData.variablePool as Record<string, any>;
+      newVariablePool = { ...data, [this.id]: validatedOutput };
+
+      console.log(
+        `[Node ${this.type.toUpperCase()}] [${this.label}] 💾 Updating execution data in database... with the new VariablePool ${JSON.stringify(newVariablePool, null, 2)}`
+      );
+
+      if (typeof validatedOutput === "object") {
         console.log(
-          `\n[Node ${this.type.toUpperCase()}] [${this.label}] 🔄 Processing edge ${edge.id}...`
+          `[Node ${this.type.toUpperCase()}] [${this.label}] 📦 Data sent:`,
+          JSON.stringify(validatedOutput, null, 2)
         );
-
-        const data = exectionData.variablePool as Record<string, any>;
-        newVariablePool = { ...data, [edge.id]: validatedOutput };
-
+      } else {
         console.log(
-          `[Node ${this.type.toUpperCase()}] [${this.label}] 💾 Updating execution data in database... with the new VariablePool ${JSON.stringify(newVariablePool, null, 2)}`
+          `[Node ${this.type.toUpperCase()}] [${this.label}] 📦 Data sent:`,
+          validatedOutput
         );
-
-        if (typeof validatedOutput === "object") {
-          console.log(
-            `[Node ${this.type.toUpperCase()}] [${this.label}] 📦 Data sent:`,
-            JSON.stringify(validatedOutput, null, 2)
-          );
-        } else {
-          console.log(
-            `[Node ${this.type.toUpperCase()}] [${this.label}] 📦 Data sent:`,
-            validatedOutput
-          );
-        }
       }
+
       const updatedData = await prisma.executionData.update({
         where: { id: executionDataId },
         data: { variablePool: newVariablePool },

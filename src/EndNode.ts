@@ -18,7 +18,7 @@ export class EndNode extends Node {
   }
 
   async execute(context: ExecutionContext) {
-    const inputs = await this.getNodeInputs(context, this.id);
+    const inputs = await this.getNodeInputs(context);
     console.log(
       `[EndNode ${this.label}] Workflow completed with inputs:`,
       Object.fromEntries(inputs)

@@ -2,13 +2,14 @@ import express from "express";
 import dotenv from "dotenv";
 import workflowsRouter from "./routes/workflows";
 import executionsRouter from "./routes/executions";
+import cors from "cors";
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
-
+const port = process.env.PORT || 5001;
 app.use(express.json());
+app.use(cors());
 
 // Routes
 app.use("/api/workflows", workflowsRouter);

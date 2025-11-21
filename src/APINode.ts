@@ -57,7 +57,7 @@ export class APINode extends Node {
     console.log(`\n🔄 [APINode ${this.label}] Starting execution`);
     console.log("━".repeat(50));
 
-    const inputs = await this.getNodeInputs(context, this.id); // Now validates automatically!
+    const inputs = await this.getNodeInputs(context);
     console.log(
       `📥 Input Data:`,
       JSON.stringify(Object.fromEntries(inputs), null, 2)
