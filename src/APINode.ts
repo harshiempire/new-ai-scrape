@@ -25,7 +25,19 @@ import Mustache from "mustache";
  * - headers: Additional headers to merge
  * - body: Request body data
  */
-export class APINode extends Node {
+
+// Define schema first
+const APINodePropsSchema = z.object({
+  method: z.enum(["GET", "POST", "PUT", "DELETE"]),
+  url: z.string(),
+  headers: z.record(z.string(), z.string()).optional(),
+  body: z.any().optional(),
+});
+
+type APINodeProps = z.infer<typeof APINodePropsSchema>;
+
+export class APINode extends Node<APINodeProps> {
+  static propsSchema = APINodePropsSchema;
   name = "APINode";
 
   constructor({
@@ -36,9 +48,10 @@ export class APINode extends Node {
   }: {
     id: string;
     label: string;
-    props?: Record<string, any>;
-    outputSchema?: import("zod").ZodTypeAny;
+    props?: APINodeProps;
+    outputSchema?: z.ZodTypeAny;
   }) {
+    APINodePropsSchema.parse(props);
     super({ id, label, type: "api", props, outputSchema });
     this.description = "Makes HTTP API calls";
 

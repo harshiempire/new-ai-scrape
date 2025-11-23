@@ -3,12 +3,12 @@ import { Edge } from "./types";
 import { z } from "zod";
 import { prisma } from "./lib/prisma";
 
-export abstract class Node {
+export abstract class Node<TProps = Record<string, any>> {
   id: string;
   label: string;
   type: string;
   description: string;
-  props: Record<string, any>;
+  props: TProps;
   inputSchema: Map<string, z.ZodTypeAny>;
   outputSchema: z.ZodTypeAny;
 
@@ -22,14 +22,14 @@ export abstract class Node {
     id: string;
     label: string;
     type: string;
-    props?: Record<string, any>;
+    props?: TProps;
     outputSchema?: z.ZodTypeAny;
   }) {
     this.id = id;
     this.label = label;
     this.type = type;
     this.description = "";
-    this.props = props || {};
+    this.props = props;
     this.inputSchema = new Map();
     // Initialize output schema from constructor param if provided, otherwise default to any
     // console.log("outputSchema", type, outputSchema);
