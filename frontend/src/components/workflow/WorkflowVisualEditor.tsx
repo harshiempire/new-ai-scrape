@@ -10,7 +10,7 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { type DragEvent, useCallback, useState } from "react";
+import { type DragEvent, useCallback, useEffect, useState } from "react";
 import "@xyflow/react/dist/style.css";
 
 import { generateEdgeId, generateNodeId } from "@/lib/workflow-transformer";
@@ -36,10 +36,18 @@ export function WorkflowVisualEditor({
   onEdgesChange,
   onNodeSelection,
 }: WorkflowVisualEditorProps) {
+  console.log("initialEdges", initialEdges);
+  console.log("initialNodes", initialNodes);
   const [nodes, setNodes, onInternalNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onInternalEdgesChange] = useEdgesState(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
-  console.log(initialNodes, initialEdges);
+
+  useEffect(() => {
+    console.log("edges", edges);
+  }, [edges]);
+  useEffect(() => {
+    console.log("node", nodes);
+  }, [nodes]);
 
   // Notify parent of changes
   const handleNodesChange = useCallback(
