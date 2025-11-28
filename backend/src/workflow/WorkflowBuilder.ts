@@ -1,4 +1,4 @@
-import { WorkflowDefinition } from "./types";
+import { WorkflowDefinition } from "../lib/types";
 
 export class WorkflowBuilder {
   workflow: WorkflowDefinition;

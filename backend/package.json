@@ -2,11 +2,10 @@
   "name": "workflow-engine",
   "version": "1.0.0",
   "description": "A DAG-based workflow execution engine built with TypeScript",
-  "main": "dist/index.js",
+  "main": "src/routes/index.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "ts-node src/example.ts",
-    "start": "nodemon dist/index.js",
+    "dev": "nodemon src/routes/index.ts",
     "clean": "rm -rf dist",
     "watch": "tsc --watch"
   },
@@ -35,6 +34,7 @@
     "express": "^5.1.0",
     "mustache": "^4.2.0",
     "prisma": "^6.19.0",
-    "zod": "^4.1.12"
+    "zod": "^4.1.12",
+    "zod-to-json-schema": "^3.25.0"
   }
 }

@@ -1,5 +1,5 @@
 import { Node } from "./Node";
-import { Edge } from "./types";
+import { Edge } from "../lib/types";
 
 /**
  * ExecutionContext - Central state container for workflow execution

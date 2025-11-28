@@ -1,8 +1,9 @@
 import express from "express";
 import dotenv from "dotenv";
-import workflowsRouter from "./routes/workflows";
-import executionsRouter from "./routes/executions";
 import cors from "cors";
+import workflowsRouter from "./workflows";
+import executionsRouter from "./executions";
+import NodeDefinitionRouter from "./node-definition";
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(cors());
 // Routes
 app.use("/api/workflows", workflowsRouter);
 app.use("/api/executions", executionsRouter);
+app.use("/api/node-definitions", NodeDefinitionRouter);
 
 // Error handling middleware
 app.use(

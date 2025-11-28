@@ -1,10 +1,10 @@
 import { Node } from "./Node";
 import { StartNode } from "./StartNode";
-import { APINode } from "./APINode";
 import { EndNode } from "./EndNode";
 import { WaitNode } from "./WaitNode";
-import { NodeDefinition } from "./types";
+import { NodeDefinition } from "../lib/types";
 import { z } from "zod";
+import { APINode, APINodeProps } from "./APINode";
 
 export class NodeFactory {
   static createNode(
@@ -23,7 +23,7 @@ export class NodeFactory {
         return new APINode({
           id: nodeDef.id,
           label: nodeDef.label,
-          props: nodeDef.props,
+          props: nodeDef.props as APINodeProps,
           outputSchema,
         });
 

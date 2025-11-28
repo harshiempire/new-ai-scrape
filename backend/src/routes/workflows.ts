@@ -1,8 +1,7 @@
 import express from "express";
-import { prisma } from "../lib/prisma";
 import { z } from "zod";
-import { WorkflowExecutor } from "../WorkflowExecutor";
-import { WorkflowDefinition } from "../types";
+import { WorkflowExecutor } from "../workflow/WorkflowExecutor";
+import { WorkflowDefinition } from "../lib/types";
 
 const workflowRouter = express.Router();
 

@@ -34,7 +34,9 @@ const APINodePropsSchema = z.object({
   body: z.any().optional(),
 });
 
-type APINodeProps = z.infer<typeof APINodePropsSchema>;
+export const APINodeDefinition = z.toJSONSchema(APINodePropsSchema);
+
+export type APINodeProps = z.infer<typeof APINodePropsSchema>;
 
 export class APINode extends Node<APINodeProps> {
   static propsSchema = APINodePropsSchema;

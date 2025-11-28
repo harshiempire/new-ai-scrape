@@ -1,8 +1,8 @@
-import { ExecutionContext } from "./ExecutionContext";
-import { Node } from "./Node";
-import { NodeFactory } from "./NodeFactory";
-import { WorkflowDefinition } from "./types";
-import { buildIndegree, hasCycle, parseSchemaDefinition } from "./utils";
+import { WorkflowDefinition } from "../lib/types";
+import { ExecutionContext } from "../nodes/ExecutionContext";
+import { NodeFactory } from "../nodes/NodeFactory";
+import { Node } from "../nodes/Node";
+import { parseSchemaDefinition, hasCycle, buildIndegree } from "../nodes/utils";
 
 export class WorkflowExecutor {
   workflow: WorkflowDefinition;

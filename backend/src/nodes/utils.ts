@@ -1,5 +1,5 @@
 import { Node as WorkflowNode } from "./Node";
-import { Edge, Indegree } from "./types";
+import { Edge, Indegree } from "../lib/types";
 import { z } from "zod";
 
 /**

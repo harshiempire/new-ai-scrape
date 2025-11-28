@@ -1,5 +1,5 @@
-import { WorkflowExecutor } from "./WorkflowExecutor";
-import { WorkflowDefinition } from "./types";
+import { WorkflowDefinition } from "../lib/types";
+import { WorkflowExecutor } from "../workflow/WorkflowExecutor";
 
 const workflow: WorkflowDefinition = {
   nodes: [

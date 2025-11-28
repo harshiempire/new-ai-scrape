@@ -1,5 +1,5 @@
-import { WorkflowExecutor } from "./WorkflowExecutor";
-import { WorkflowDefinition } from "./types";
+import { WorkflowDefinition } from "../lib/types";
+import { WorkflowExecutor } from "../workflow/WorkflowExecutor";
 
 const workflow: WorkflowDefinition = {
   nodes: [
@@ -38,6 +38,6 @@ const executor = new WorkflowExecutor(
   initialInputs,
   "test-execution"
 );
-executor.execute().catch((error) => {
+executor.execute().catch((error: any) => {
   console.error("Expected validation error:", error.message);
 });

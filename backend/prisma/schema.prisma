@@ -46,3 +46,26 @@ model ExecutionData {
 
   @@map("execution_data")
 }
+
+model Nodes {
+  id               String   @id @default(uuid())
+  type             NodeType
+  propertiesSchema Json
+
+  @@map("nodes")
+}
+
+enum NodeType {
+  ACTION
+  TRIGGER
+  CONDITION
+}
+
+model Edges {
+  id     String @id @default(uuid())
+  source String
+  target String
+  data   Json // Storing edge data as JSON
+
+  @@map("edges")
+}
