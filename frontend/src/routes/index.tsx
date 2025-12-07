@@ -1,46 +1,41 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { getWorkflows } from "@/api/workflow";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from "@/components/ui/card";
-
-import { Link } from "@tanstack/react-router";
+import { nodeDefitionsQueryOptions, workflowsQueryOptions } from "@/query";
 
 export const Route = createFileRoute("/")({
+  loader: ({ context: { queryClient } }) => {
+    return Promise.all([
+      queryClient.ensureQueryData(workflowsQueryOptions()),
+      queryClient.ensureQueryData(nodeDefitionsQueryOptions()),
+    ]);
+  },
   component: App,
 });
 
 function App() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["workflows"],
-    queryFn: getWorkflows,
-  });
-
-  if (isLoading)
-    return (
-      <div className="text-center py-10 text-sm text-muted-foreground">
-        Loading workflows...
-      </div>
-    );
-
-  if (isError)
-    return (
-      <div className="text-center py-10 text-red-500">
-        Failed to load workflows
-      </div>
-    );
+	// Add to any component temporarily
+if (typeof (globalThis as any).__REACT_DEVTOOLS_GLOBAL_HOOK__ !== 'undefined') {
+  console.log('React Compiler Active:', 
+    !!(globalThis as any).__REACT_DEVTOOLS_GLOBAL_HOOK__?.reactCompiler);
+}
+  const { data: workflows } = useSuspenseQuery(workflowsQueryOptions());
+  const { data: nodeDefinitions } = useSuspenseQuery(
+    nodeDefitionsQueryOptions()
+  );
 
   return (
     <div className="mx-auto max-w-4xl p-6">
       <h1 className="text-3xl font-semibold mb-6 tracking-tight">Workflows</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data?.map((wf) => (
+        {workflows?.map((wf) => (
           <Link
             to={"/workflow/$workflowId"}
             params={{ workflowId: wf.id }}
@@ -73,6 +68,21 @@ function App() {
             </Card>
           </Link>
         ))}
+      </div>
+      <div className="mt-12">
+        <h2 className="text-2xl font-semibold mb-6 tracking-tight">
+          Node Definitions
+        </h2>
+        <Card>
+          <CardHeader>
+            <CardTitle>Available Nodes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="bg-gray-50 p-4 rounded-lg overflow-auto text-sm">
+              {JSON.stringify(nodeDefinitions, null, 2)}
+            </pre>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -8,9 +8,9 @@ import { WaitNode } from "./WaitNode";
 // with our custom WorkflowNodeData type, but the code works correctly at runtime.
 // This is a known limitation: https://github.com/xyflow/xyflow/discussions/2780
 export const nodeTypes = {
-	start: StartNode,
-	api: APINode,
-	wait: WaitNode,
-	end: EndNode,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  start: StartNode,
+  api: APINode,
+  wait: WaitNode,
+  end: EndNode,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any as NodeTypes;

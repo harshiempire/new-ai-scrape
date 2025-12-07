@@ -1,4 +1,4 @@
-import { AlertCircle, Save } from "lucide-react";
+import { AlertCircle, Play, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
@@ -9,6 +9,8 @@ interface EditorToolbarProps {
 	onManualSave: () => void;
 	isSaving?: boolean;
 	className?: string;
+	onExecute?: () => void;
+	isExecuting?: boolean;
 }
 
 export function EditorToolbar({
@@ -18,6 +20,8 @@ export function EditorToolbar({
 	onManualSave,
 	isSaving = false,
 	className,
+	onExecute,
+	isExecuting = false,
 }: EditorToolbarProps) {
 	return (
 		<div
@@ -53,18 +57,35 @@ export function EditorToolbar({
 				{isSaving && <div className="text-sm text-gray-500">Saving...</div>}
 			</div>
 
+			{/* Action buttons */}
+		<div className="flex items-center gap-2">
+			{/* Execute button */}
+			{onExecute && (
+				<Button
+					onClick={onExecute}
+					disabled={isExecuting}
+					size="sm"
+					variant="default"
+					className="bg-green-600 hover:bg-green-700"
+				>
+					<Play className="w-4 h-4 mr-2" />
+					{isExecuting ? "Executing..." : "Execute"}
+				</Button>
+			)}
+
 			{/* Manual save button (only shown when auto-save is off) */}
 			{!autoSaveEnabled && (
 				<Button
 					onClick={onManualSave}
 					disabled={!hasUnsavedChanges || isSaving}
 					size="sm"
-					variant="default"
+					variant="outline"
 				>
 					<Save className="w-4 h-4 mr-2" />
 					Save Workflow
 				</Button>
 			)}
 		</div>
-	);
+	</div>
+);
 }

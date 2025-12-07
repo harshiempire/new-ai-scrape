@@ -1,7 +1,7 @@
 import { AlertCircle, AlertTriangle, CheckCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { WorkflowEdge, WorkflowNode } from "@/lib/workflow-types";
+import { useWorkflowStore } from "@/store/useWorkflowStore.ts";
 import {
 	getValidationSummary,
 	type ValidationError,
@@ -9,16 +9,14 @@ import {
 } from "@/lib/workflow-validation";
 
 interface ValidationPanelProps {
-	nodes: WorkflowNode[];
-	edges: WorkflowEdge[];
 	className?: string;
 }
 
-export function ValidationPanel({
-	nodes,
-	edges,
-	className,
-}: ValidationPanelProps) {
+export function ValidationPanel({ className }: ValidationPanelProps) {
+	// Read nodes and edges from store
+	const nodes = useWorkflowStore((state) => state.nodes);
+	const edges = useWorkflowStore((state) => state.edges);
+
 	const [errors, setErrors] = useState<ValidationError[]>([]);
 
 	useEffect(() => {

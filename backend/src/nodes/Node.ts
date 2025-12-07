@@ -159,9 +159,10 @@ export abstract class Node<TProps = Record<string, any>> {
 
     incomingEdges.forEach((edge) => {
       const data = exectionData.variablePool as Record<string, any>;
-      const value = data[edge.source];
+      const sourceNodeid = edge.source
+      const value = data[sourceNodeid];
       if (value !== undefined) {
-        inputs.set(edge.id, value);
+        inputs.set(sourceNodeid, value);
       }
     });
 

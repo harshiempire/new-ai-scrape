@@ -1,21 +1,22 @@
 import { LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getLayoutedElements } from "@/lib/workflow-layout";
+import { useWorkflowStore } from "@/store/useWorkflowStore.ts";
 import type { WorkflowEdge, WorkflowNode } from "@/lib/workflow-types";
 
 interface LayoutControlsProps {
-	nodes: WorkflowNode[];
-	edges: WorkflowEdge[];
 	onLayout: (nodes: WorkflowNode[], edges: WorkflowEdge[]) => void;
 	className?: string;
 }
 
 export function LayoutControls({
-	nodes,
-	edges,
 	onLayout,
 	className,
 }: LayoutControlsProps) {
+	// Read nodes and edges from store
+	const nodes = useWorkflowStore((state) => state.nodes);
+	const edges = useWorkflowStore((state) => state.edges);
+
 	const handleAutoLayout = () => {
 		const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
 			nodes,

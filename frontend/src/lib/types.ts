@@ -48,3 +48,13 @@ export interface UpdateExecutionBody {
   executionTime?: number | null;
   variablePool?: Record<string, any>;
 }
+
+export interface TemplateSuggestion {
+    nodeLabel: string;
+    nodeId: string;
+    variables: Array<{
+        path: string;      // e.g., "city" or "data.temperature"
+        type: string;      // e.g., "string", "number"
+        fullPath: string;  // e.g., "{{Fetch Weather.data.temperature}}"
+    }>;
+}

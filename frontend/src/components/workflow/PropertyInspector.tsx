@@ -12,32 +12,27 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { WorkflowNode } from "@/lib/workflow-types";
+import { useWorkflowStore } from "@/store/useWorkflowStore.ts";
 
-interface PropertyInspectorProps {
-	selectedNode: WorkflowNode | null;
-	onUpdateNode: (nodeId: string, updates: Partial<WorkflowNode["data"]>) => void;
-	onClose: () => void;
-}
+export function PropertyInspector() {
+	// Read from store
+	const selectedNode = useWorkflowStore((state) => state.selectedNode);
+	const updateNode = useWorkflowStore((state) => state.updateNode);
+	const clearSelection = useWorkflowStore((state) => state.clearSelection);
 
-export function PropertyInspector({
-	selectedNode,
-	onUpdateNode,
-	onClose,
-}: PropertyInspectorProps) {
 	const handleLabelChange = useCallback(
 		(value: string) => {
 			if (selectedNode) {
-				onUpdateNode(selectedNode.id, { label: value });
+				updateNode(selectedNode.id, { label: value });
 			}
 		},
-		[selectedNode, onUpdateNode],
+		[selectedNode, updateNode],
 	);
 
 	const handlePropsChange = useCallback(
 		(key: string, value: string | number) => {
 			if (selectedNode) {
-				onUpdateNode(selectedNode.id, {
+				updateNode(selectedNode.id, {
 					props: {
 						...selectedNode.data.props,
 						[key]: value,
@@ -45,7 +40,7 @@ export function PropertyInspector({
 				});
 			}
 		},
-		[selectedNode, onUpdateNode],
+		[selectedNode, updateNode],
 	);
 
 	if (!selectedNode) {
@@ -64,7 +59,7 @@ export function PropertyInspector({
 		<div className="w-80 border-l bg-background flex flex-col h-full">
 			<div className="p-4 border-b flex items-center justify-between">
 				<h3 className="font-semibold">Node Properties</h3>
-				<Button variant="ghost" size="icon-sm" onClick={onClose}>
+				<Button variant="ghost" size="icon-sm" onClick={clearSelection}>
 					<X className="h-4 w-4" />
 				</Button>
 			</div>

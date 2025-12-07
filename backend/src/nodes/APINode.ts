@@ -79,22 +79,20 @@ export class APINode extends Node<APINodeProps> {
     );
 
     const templateModel: Record<string, any> = {};
-    inputs.forEach((data, edgeId) => {
-      templateModel[edgeId] = data;
-    });
+      inputs.forEach((data, sourceNodeId) => {
+          // Find the source node to get its label
+          const sourceNode = context.nodes?.get(sourceNodeId);
+          if (sourceNode) {
+              templateModel[sourceNode.label] = data;
+          }
+      });
 
     const method = (this.props.method || "GET").toUpperCase();
-    let url: string | undefined = this.props.url;
-    console.log(`🛠️ Request Method: ${method}`);
-
-    if (url) {
-      url = Mustache.render(url, templateModel);
-    } else if (inputs.size === 1) {
-      const singleInput = inputs.values().next().value;
-      url = singleInput?.url;
-    }
-
-    if (!url) {
+      let url = this.props.url;
+      if (url) {
+          url = Mustache.render(url, templateModel);
+      }
+    else {
       throw new Error(`APINode [${this.label}] requires a URL`);
     }
 

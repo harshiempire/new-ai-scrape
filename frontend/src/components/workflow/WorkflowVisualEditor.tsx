@@ -14,6 +14,7 @@ import { type DragEvent, useCallback, useEffect, useState } from "react";
 import "@xyflow/react/dist/style.css";
 
 import { generateEdgeId, generateNodeId } from "@/lib/workflow-transformer";
+import { useWorkflowStore } from "@/store/useWorkflowStore.ts";
 import type {
   NodeType,
   WorkflowEdge,
@@ -22,61 +23,62 @@ import type {
 import { nodeTypes } from "./nodes";
 
 interface WorkflowVisualEditorProps {
-  initialNodes: WorkflowNode[];
-  initialEdges: WorkflowEdge[];
   onNodesChange?: (nodes: WorkflowNode[]) => void;
   onEdgesChange?: (edges: WorkflowEdge[]) => void;
   onNodeSelection?: (selectedNodes: WorkflowNode[]) => void;
 }
 
 export function WorkflowVisualEditor({
-  initialNodes,
-  initialEdges,
   onNodesChange,
   onEdgesChange,
   onNodeSelection,
 }: WorkflowVisualEditorProps) {
-  console.log("initialEdges", initialEdges);
-  console.log("initialNodes", initialNodes);
-  const [nodes, setNodes, onInternalNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onInternalEdgesChange] = useEdgesState(initialEdges);
+  // Read from store
+  const storeNodes = useWorkflowStore((state) => state.nodes);
+  const storeEdges = useWorkflowStore((state) => state.edges);
+  const addNode = useWorkflowStore((state) => state.addNode);
+  const setSelectedNodes = useWorkflowStore((state) => state.setSelectedNodes);
+
+  // ReactFlow internal state (synced with store)
+  const [nodes, setNodes, onInternalNodesChange] = useNodesState(storeNodes);
+  const [edges, setEdges, onInternalEdgesChange] = useEdgesState(storeEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
+  // Sync store changes to ReactFlow
   useEffect(() => {
-    console.log("edges", edges);
-  }, [edges]);
-  useEffect(() => {
-    console.log("node", nodes);
-  }, [nodes]);
+    setNodes(storeNodes);
+  }, [storeNodes, setNodes]);
 
-  // Notify parent of changes
+  useEffect(() => {
+    setEdges(storeEdges);
+  }, [storeEdges, setEdges]);
+
+  // Handle node changes - NO MORE setTimeout!
   const handleNodesChange = useCallback(
     (changes: any) => {
       onInternalNodesChange(changes);
-      if (onNodesChange) {
-        // Wait for next tick to get updated nodes
-        setTimeout(() => {
-          setNodes((currentNodes) => {
-            onNodesChange(currentNodes);
-            return currentNodes;
-          });
-        }, 0);
-      }
+      // Get updated nodes after ReactFlow processes changes
+      setNodes((currentNodes) => {
+        if (onNodesChange) {
+          onNodesChange(currentNodes);
+        }
+        return currentNodes;
+      });
     },
     [onInternalNodesChange, onNodesChange, setNodes]
   );
 
+  // Handle edge changes - NO MORE setTimeout!
   const handleEdgesChange = useCallback(
     (changes: any) => {
       onInternalEdgesChange(changes);
-      if (onEdgesChange) {
-        setTimeout(() => {
-          setEdges((currentEdges) => {
-            onEdgesChange(currentEdges);
-            return currentEdges;
-          });
-        }, 0);
-      }
+      // Get updated edges after ReactFlow processes changes
+      setEdges((currentEdges) => {
+        if (onEdgesChange) {
+          onEdgesChange(currentEdges);
+        }
+        return currentEdges;
+      });
     },
     [onInternalEdgesChange, onEdgesChange, setEdges]
   );
@@ -91,16 +93,13 @@ export function WorkflowVisualEditor({
         animated: true,
       };
 
-      setEdges((eds) => addEdge(newEdge as WorkflowEdge, eds));
-
-      if (onEdgesChange) {
-        setTimeout(() => {
-          setEdges((currentEdges) => {
-            onEdgesChange(currentEdges);
-            return currentEdges;
-          });
-        }, 0);
-      }
+      setEdges((eds) => {
+        const updatedEdges = addEdge(newEdge as WorkflowEdge, eds);
+        if (onEdgesChange) {
+          onEdgesChange(updatedEdges);
+        }
+        return updatedEdges;
+      });
     },
     [setEdges, onEdgesChange]
   );
@@ -138,28 +137,21 @@ export function WorkflowVisualEditor({
         },
       };
 
-      setNodes((nds) => nds.concat(newNode));
-
-      if (onNodesChange) {
-        setTimeout(() => {
-          setNodes((currentNodes) => {
-            onNodesChange(currentNodes);
-            return currentNodes;
-          });
-        }, 0);
-      }
+      // Add to store directly
+      addNode(newNode);
     },
-    [reactFlowInstance, setNodes, onNodesChange]
+    [reactFlowInstance, addNode]
   );
 
   // Handle selection change
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: WorkflowNode[] }) => {
+      setSelectedNodes(selectedNodes);
       if (onNodeSelection) {
         onNodeSelection(selectedNodes);
       }
     },
-    [onNodeSelection]
+    [setSelectedNodes, onNodeSelection]
   );
 
   return (
