@@ -1,6 +1,7 @@
 import { ExecutionContext } from "./ExecutionContext";
 import { Edge } from "../lib/types";
 import { z } from "zod";
+import { prisma } from "../lib/prisma";
 
 export abstract class Node<TProps = Record<string, any>> {
   id: string;
@@ -63,7 +64,7 @@ export abstract class Node<TProps = Record<string, any>> {
 
     if (!schema) {
       console.log(
-        `[Node ${this.type.toUpperCase()}] [${this.label}] No input schema defined for edge ${edgeId}, skipping validation`
+        `[Node ${this.type.toUpperCase()}] [${this.label}] No input schema defined for edge ${edgeId}, skipping validation`,
       );
       return data;
     }
@@ -71,19 +72,19 @@ export abstract class Node<TProps = Record<string, any>> {
     try {
       const validated = schema.parse(data);
       console.log(
-        `[Node ${this.type.toUpperCase()}] [${this.label}] ✅ Input validation passed for edge ${edgeId}`
+        `[Node ${this.type.toUpperCase()}] [${this.label}] ✅ Input validation passed for edge ${edgeId}`,
       );
       return validated;
     } catch (error) {
       if (error instanceof z.ZodError) {
         console.error(
           `[Node ${this.type.toUpperCase()}] [${this.label}] ❌ Input validation failed for edge ${edgeId}:`,
-          JSON.stringify(error.issues, null, 2)
+          JSON.stringify(error.issues, null, 2),
         );
         throw new Error(
           `Input validation failed for ${
             this.label
-          } on edge ${edgeId}: ${JSON.stringify(error.issues, null, 2)}`
+          } on edge ${edgeId}: ${JSON.stringify(error.issues, null, 2)}`,
         );
       }
       throw error;
@@ -97,7 +98,7 @@ export abstract class Node<TProps = Record<string, any>> {
     // If no specific schema, return as-is
     if (this.outputSchema === z.any() || !this.outputSchema) {
       console.log(
-        `[Node ${this.type.toUpperCase()}] [${this.label}] No output schema defined, skipping validation`
+        `[Node ${this.type.toUpperCase()}] [${this.label}] No output schema defined, skipping validation`,
       );
       return data;
     }
@@ -105,7 +106,7 @@ export abstract class Node<TProps = Record<string, any>> {
     try {
       const validated = this.outputSchema.parse(data);
       console.log(
-        `[Node ${this.type.toUpperCase()}] [${this.label}] ✅ Output validation passed`
+        `[Node ${this.type.toUpperCase()}] [${this.label}] ✅ Output validation passed`,
       );
       if (typeof validated === "object") {
         console.log("Output Data:", JSON.stringify(validated, null, 2));
@@ -117,14 +118,14 @@ export abstract class Node<TProps = Record<string, any>> {
       if (error instanceof z.ZodError) {
         console.error(
           `[Node ${this.type.toUpperCase()}] [${this.label}] ❌ Output validation failed:`,
-          JSON.stringify(error.issues, null, 2)
+          JSON.stringify(error.issues, null, 2),
         );
         throw new Error(
           `Output validation failed for ${this.label}: ${JSON.stringify(
             error.issues,
             null,
-            2
-          )}`
+            2,
+          )}`,
         );
       }
       throw error;
@@ -137,7 +138,7 @@ export abstract class Node<TProps = Record<string, any>> {
    */
   protected async getNodeInputs(context: ExecutionContext) {
     const incomingEdges = context.edges.filter(
-      (edge) => edge.target === this.id
+      (edge) => edge.target === this.id,
     );
     const inputs = new Map<string, any>();
 
@@ -146,20 +147,20 @@ export abstract class Node<TProps = Record<string, any>> {
       throw new Error("Execution data ID is missing in the context");
     }
 
-    const exectionData = await prisma.executionData.findUnique({
+    const executionData = await prisma.executionData.findUnique({
       where: { id: executionDataId },
       select: {
         variablePool: true,
       },
     });
-    if (!exectionData) {
+    if (!executionData) {
       throw new Error("Execution data not found");
     }
-    console.log(executionDataId, exectionData);
+    console.log(executionDataId, executionData);
 
     incomingEdges.forEach((edge) => {
-      const data = exectionData.variablePool as Record<string, any>;
-      const sourceNodeid = edge.source
+      const data = executionData.variablePool as Record<string, any>;
+      const sourceNodeid = edge.source;
       const value = data[sourceNodeid];
       if (value !== undefined) {
         inputs.set(sourceNodeid, value);
@@ -172,16 +173,16 @@ export abstract class Node<TProps = Record<string, any>> {
   protected async sendOutput(
     output: any,
     context: ExecutionContext,
-    edgeFilter?: (edge: Edge) => boolean
+    edgeFilter?: (edge: Edge) => boolean,
   ) {
     console.log(
-      `\n📤 [Node ${this.type.toUpperCase()}] [${this.label}] Preparing to send output...`
+      `\n📤 [Node ${this.type.toUpperCase()}] [${this.label}] Preparing to send output...`,
     );
 
     // Validate output before sending
     try {
       console.log(
-        `[Node ${this.type.toUpperCase()}] [${this.label}] 🔍 Validating output data...`
+        `[Node ${this.type.toUpperCase()}] [${this.label}] 🔍 Validating output data...`,
       );
       const validatedOutput = this.validateOutput(output);
 
@@ -203,25 +204,25 @@ export abstract class Node<TProps = Record<string, any>> {
       let newVariablePool = executionData.variablePool;
 
       console.log(
-        `\n[Node ${this.type.toUpperCase()}] [${this.label}] 🔄 Processing node ${this.id}...`
+        `\n[Node ${this.type.toUpperCase()}] [${this.label}] 🔄 Processing node ${this.id}...`,
       );
 
       const data = executionData.variablePool as Record<string, any>;
       newVariablePool = { ...data, [this.id]: validatedOutput };
 
       console.log(
-        `[Node ${this.type.toUpperCase()}] [${this.label}] 💾 Updating execution data in database... with the new VariablePool ${JSON.stringify(newVariablePool, null, 2)}`
+        `[Node ${this.type.toUpperCase()}] [${this.label}] 💾 Updating execution data in database... with the new VariablePool ${JSON.stringify(newVariablePool, null, 2)}`,
       );
 
       if (typeof validatedOutput === "object") {
         console.log(
           `[Node ${this.type.toUpperCase()}] [${this.label}] 📦 Data sent:`,
-          JSON.stringify(validatedOutput, null, 2)
+          JSON.stringify(validatedOutput, null, 2),
         );
       } else {
         console.log(
           `[Node ${this.type.toUpperCase()}] [${this.label}] 📦 Data sent:`,
-          validatedOutput
+          validatedOutput,
         );
       }
 
@@ -230,11 +231,11 @@ export abstract class Node<TProps = Record<string, any>> {
         data: { variablePool: newVariablePool },
       });
       console.log(
-        `✅ [Node ${this.type.toUpperCase()}] [${this.label}] Successfully sent data to edges - updated data is ${JSON.stringify(updatedData.variablePool, null, 2)}`
+        `✅ [Node ${this.type.toUpperCase()}] [${this.label}] Successfully sent data to edges - updated data is ${JSON.stringify(updatedData.variablePool, null, 2)}`,
       );
     } catch (error) {
       console.error(
-        `\n❌ [Node ${this.type.toUpperCase()}] [${this.label}] Error sending output:`
+        `\n❌ [Node ${this.type.toUpperCase()}] [${this.label}] Error sending output:`,
       );
       console.error("━".repeat(50));
       if (error instanceof Error) {

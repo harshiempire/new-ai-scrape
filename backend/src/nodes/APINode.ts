@@ -1,7 +1,9 @@
 import { Node } from "./Node";
 import { ExecutionContext } from "./ExecutionContext";
-import z from "zod";
+import z, { success } from "zod";
 import Mustache from "mustache";
+import type { NodeDefinitionMeta } from "./NodeDefinitionMeta";
+import { createNodePropsSchema } from "../lib/schemaBuilder";
 
 /**
  * APINode - Makes HTTP requests with full configurability
@@ -26,15 +28,57 @@ import Mustache from "mustache";
  * - body: Request body data
  */
 
-// Define schema first
-const APINodePropsSchema = z.object({
-  method: z.enum(["GET", "POST", "PUT", "DELETE"]),
-  url: z.string(),
-  headers: z.record(z.string(), z.string()).optional(),
-  body: z.any().optional(),
-});
+// Single source of truth: Zod schema + UI metadata
+const { zodSchema: APINodePropsSchema, jsonSchema: APINodeUISchema } =
+  createNodePropsSchema({
+    schema: z.object({
+      method: z.enum(["GET", "POST", "PUT", "DELETE"]),
+      url: z.string(),
+      headers: z.record(z.string(), z.string()).optional(),
+      body: z.any().optional(),
+    }),
+    ui: {
+      method: {
+        showOnNode: true,
+        colorMap: { GET: "blue", POST: "green", PUT: "amber", DELETE: "red" },
+      },
+      url: { showOnNode: true },
+      // headers: not shown on node (too complex)
+    },
+    conditionals: [
+      {
+        if: { field: "method", values: ["POST", "PUT", "DELETE"] },
+        then: { show: { body: { type: "string", title: "Request Body" } } },
+      },
+    ],
+    required: ["method", "url"],
+  });
 
-export const APINodeDefinition = z.toJSONSchema(APINodePropsSchema);
+export const APINodeMeta: NodeDefinitionMeta = {
+  type: "api",
+  label: "API Call",
+  description: "Make HTTP requests to external APIs",
+  category: "action",
+  icon: "Globe",
+  color: "blue",
+  propsSchema: APINodeUISchema,
+  defaultProps: {
+    method: "GET",
+    url: "",
+  },
+  validationRules: [
+    { field: "url", type: "required", message: "URL is required" },
+    {
+      field: "url",
+      type: "pattern",
+      value: "^https?://",
+      message: "Must be a valid URL",
+    },
+  ],
+  visualConfig: {
+    handles: { inputs: true, outputs: true },
+  },
+};
 
 export type APINodeProps = z.infer<typeof APINodePropsSchema>;
 
@@ -61,7 +105,6 @@ export class APINode extends Node<APINodeProps> {
     if (this.outputSchema === z.any()) {
       this.outputSchema = z
         .object({
-          status: z.number().optional(),
           data: z.any(),
         })
         .passthrough(); // Allow additional fields
@@ -75,24 +118,23 @@ export class APINode extends Node<APINodeProps> {
     const inputs = await this.getNodeInputs(context);
     console.log(
       `📥 Input Data:`,
-      JSON.stringify(Object.fromEntries(inputs), null, 2)
+      JSON.stringify(Object.fromEntries(inputs), null, 2),
     );
 
     const templateModel: Record<string, any> = {};
-      inputs.forEach((data, sourceNodeId) => {
-          // Find the source node to get its label
-          const sourceNode = context.nodes?.get(sourceNodeId);
-          if (sourceNode) {
-              templateModel[sourceNode.label] = data;
-          }
-      });
+    inputs.forEach((data, sourceNodeId) => {
+      // Find the source node to get its label
+      const sourceNode = context.nodes?.get(sourceNodeId);
+      if (sourceNode) {
+        templateModel[sourceNode.label] = data;
+      }
+    });
 
     const method = (this.props.method || "GET").toUpperCase();
-      let url = this.props.url;
-      if (url) {
-          url = Mustache.render(url, templateModel);
-      }
-    else {
+    let url = this.props.url;
+    if (url) {
+      url = Mustache.render(url, templateModel);
+    } else {
       throw new Error(`APINode [${this.label}] requires a URL`);
     }
 
@@ -139,14 +181,9 @@ export class APINode extends Node<APINodeProps> {
       const rawData = contentType.includes("application/json")
         ? await response.json()
         : await response.text();
-
       // Wrap response in standard format
-      responseData = {
-        status: response.status,
-        data: rawData,
-      };
-
-      console.log(`[APINode ${this.label}] Response received`);
+      ((responseData = rawData),
+        console.log(`[APINode ${this.label}] Response received`));
     } catch (error) {
       console.error(`[APINode ${this.label}] Error:`, error);
       throw error;

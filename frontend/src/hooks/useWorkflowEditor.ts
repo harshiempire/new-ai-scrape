@@ -7,13 +7,10 @@ import { useUndoRedo } from "./useUndoRedo";
 import { useWorkflowSave } from "./useWorkflowSave";
 import { toBackendWorkflow } from "@/lib/workflow-transformer";
 import type { WorkflowExecution } from "@/lib/types";
-import {
-	executionDataQueryOptions,
-	executionsQueryOptions,
-} from "@/query";
+import { executionDataQueryOptions, executionsQueryOptions } from "@/query";
 
 interface UseWorkflowEditorOptions {
-	workflowId: string;
+  workflowId: string;
 }
 
 /**
@@ -31,206 +28,214 @@ interface UseWorkflowEditorOptions {
  * @returns Complete workflow editor interface
  */
 export function useWorkflowEditor({ workflowId }: UseWorkflowEditorOptions) {
-	const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-	// Global state from Zustand
-	const {
-		nodes,
-		edges,
-		setNodes,
-		setEdges,
-		selectedNode,
-		setSelectedNode,
-		updateNode,
-		activeTab,
-		setActiveTab,
-		loadWorkflow,
-	} = useWorkflowStore();
+  // Global state from Zustand
+  const {
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    selectedNode,
+    setSelectedNode,
+    updateNode,
+    activeTab,
+    setActiveTab,
+    loadWorkflow,
+  } = useWorkflowStore();
 
-	// Local UI state (execution selection)
-	const [selectedExecution, setSelectedExecution] =
-		useState<WorkflowExecution>();
+  // Local UI state (execution selection)
+  const [selectedExecution, setSelectedExecution] =
+    useState<WorkflowExecution>();
 
-	// Save workflow mutation
-	const saveWorkflowMutation = useMutation({
-		mutationFn: async (data: { nodes: WorkflowNode[]; edges: WorkflowEdge[] }) => {
-			const backendWorkflow = toBackendWorkflow(data.nodes, data.edges);
-			await api.patch(`/api/workflows/${workflowId}`, backendWorkflow);
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["workflow", workflowId] });
-		},
-	});
+  // Save workflow mutation
+  const saveWorkflowMutation = useMutation({
+    mutationFn: async (data: {
+      nodes: WorkflowNode[];
+      edges: WorkflowEdge[];
+    }) => {
+      const backendWorkflow = toBackendWorkflow(data.nodes, data.edges);
+      await api.patch(`/workflows/${workflowId}`, backendWorkflow);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workflow", workflowId] });
+    },
+  });
 
-	// Execute workflow mutation
-	const executeWorkflowMutation = useMutation({
-		mutationFn: async (initialInputs: Record<string, any>) => {
-			const response = await api.post(`/api/workflows/${workflowId}/run`, {
-				initialInputs,
-			});
-			return response.data;
-		},
-		onSuccess: () => {
-			setActiveTab("executions");
-			queryClient.invalidateQueries({ queryKey: ["executions", workflowId] });
-		},
-		onError: (error) => {
-			console.error("Failed to execute workflow:", error);
-			alert("Failed to execute workflow. Check console for details.");
-		},
-	});
+  // Execute workflow mutation
+  const executeWorkflowMutation = useMutation({
+    mutationFn: async (initialInputs: Record<string, any>) => {
+      const response = await api.post(`/workflows/${workflowId}/run`, {
+        initialInputs,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      setActiveTab("executions");
+      queryClient.invalidateQueries({ queryKey: ["executions", workflowId] });
+    },
+    onError: (error) => {
+      console.error("Failed to execute workflow:", error);
+      alert("Failed to execute workflow. Check console for details.");
+    },
+  });
+  // Undo/Redo hook
+  const { saveState, undo, redo, canUndo, canRedo } = useUndoRedo({
+    maxHistorySize: 50,
+    onStateChange: (nodes, edges) => {
+      setNodes(nodes);
+      setEdges(edges);
+    },
+  });
 
-	// Undo/Redo hook
-	const { saveState, undo, redo, canUndo, canRedo } = useUndoRedo({
-		maxHistorySize: 50,
-		onStateChange: (nodes, edges) => {
-			setNodes(nodes);
-			setEdges(edges);
-		},
-	});
+  // Auto-save hook
+  const {
+    autoSaveEnabled,
+    toggleAutoSave,
+    hasUnsavedChanges,
+    isSaving,
+    triggerChange,
+    handleManualSave,
+  } = useWorkflowSave({
+    workflowId,
+    onSave: async (nodes, edges) => {
+      await saveWorkflowMutation.mutateAsync({ nodes, edges });
+    },
+  });
 
-	// Auto-save hook
-	const {
-		autoSaveEnabled,
-		toggleAutoSave,
-		hasUnsavedChanges,
-		isSaving,
-		triggerChange,
-		handleManualSave,
-	} = useWorkflowSave({
-		workflowId,
-		onSave: async (nodes, edges) => {
-			await saveWorkflowMutation.mutateAsync({ nodes, edges });
-		},
-	});
+  // Handle node changes
+  const handleNodesChange = useCallback(
+    (updatedNodes: WorkflowNode[]) => {
+      setNodes(updatedNodes);
+      saveState(updatedNodes, edges);
+      triggerChange(updatedNodes, edges);
+    },
+    [edges, saveState, triggerChange, setNodes],
+  );
 
-	// Handle node changes
-	const handleNodesChange = useCallback(
-		(updatedNodes: WorkflowNode[]) => {
-			setNodes(updatedNodes);
-			saveState(updatedNodes, edges);
-			triggerChange(updatedNodes, edges);
-		},
-		[edges, saveState, triggerChange, setNodes],
-	);
+  // Handle edge changes
+  const handleEdgesChange = useCallback(
+    (updatedEdges: WorkflowEdge[]) => {
+      setEdges(updatedEdges);
+      saveState(nodes, updatedEdges);
+      triggerChange(nodes, updatedEdges);
+    },
+    [nodes, saveState, triggerChange, setEdges],
+  );
 
-	// Handle edge changes
-	const handleEdgesChange = useCallback(
-		(updatedEdges: WorkflowEdge[]) => {
-			setEdges(updatedEdges);
-			saveState(nodes, updatedEdges);
-			triggerChange(nodes, updatedEdges);
-		},
-		[nodes, saveState, triggerChange, setEdges],
-	);
+  // Handle node selection
+  const handleNodeSelection = useCallback(
+    (selectedNodes: WorkflowNode[]) => {
+      setSelectedNode(selectedNodes.length === 1 ? selectedNodes[0] : null);
+    },
+    [setSelectedNode],
+  );
 
-	// Handle node selection
-	const handleNodeSelection = useCallback(
-		(selectedNodes: WorkflowNode[]) => {
-			setSelectedNode(selectedNodes.length === 1 ? selectedNodes[0] : null);
-		},
-		[setSelectedNode],
-	);
+  // Handle node property updates
+  const handleNodeUpdate = useCallback(
+    (nodeId: string, updates: Partial<WorkflowNode["data"]>) => {
+      // Compute updated nodes before updating store
+      const updatedNodes = nodes.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, ...updates } }
+          : node,
+      );
+      updateNode(nodeId, updates);
+      saveState(updatedNodes, edges);
+      triggerChange(updatedNodes, edges);
+    },
+    [nodes, edges, saveState, triggerChange, updateNode],
+  );
 
-	// Handle node property updates
-	const handleNodeUpdate = useCallback(
-		(nodeId: string, updates: Partial<WorkflowNode["data"]>) => {
-			updateNode(nodeId, updates);
-			saveState(nodes, edges);
-			triggerChange(nodes, edges);
-		},
-		[nodes, edges, saveState, triggerChange, updateNode],
-	);
+  // Handle layout
+  const handleLayout = useCallback(
+    (layoutedNodes: WorkflowNode[], layoutedEdges: WorkflowEdge[]) => {
+      setNodes(layoutedNodes);
+      setEdges(layoutedEdges);
+      saveState(layoutedNodes, layoutedEdges);
+      triggerChange(layoutedNodes, layoutedEdges);
+    },
+    [saveState, triggerChange, setNodes, setEdges],
+  );
 
-	// Handle layout
-	const handleLayout = useCallback(
-		(layoutedNodes: WorkflowNode[], layoutedEdges: WorkflowEdge[]) => {
-			setNodes(layoutedNodes);
-			setEdges(layoutedEdges);
-			saveState(layoutedNodes, layoutedEdges);
-			triggerChange(layoutedNodes, layoutedEdges);
-		},
-		[saveState, triggerChange, setNodes, setEdges],
-	);
+  // Execute workflow
+  const handleExecuteWorkflow = useCallback(
+    (initialInputs: Record<string, any>) => {
+      executeWorkflowMutation.mutate(initialInputs);
+    },
+    [executeWorkflowMutation],
+  );
 
-	// Execute workflow
-	const handleExecuteWorkflow = useCallback(
-		(initialInputs: Record<string, any>) => {
-			executeWorkflowMutation.mutate(initialInputs);
-		},
-		[executeWorkflowMutation],
-	);
+  // Executions query (only load when on executions tab)
+  const { data: executions, isLoading: isLoadingExecutions } = useQuery({
+    ...executionsQueryOptions(workflowId),
+    enabled: activeTab === "executions",
+  });
 
-	// Executions query (only load when on executions tab)
-	const { data: executions, isLoading: isLoadingExecutions } = useQuery({
-		...executionsQueryOptions(workflowId),
-		enabled: activeTab === "executions",
-	});
+  // Execution data query
+  const { data: executionData, isLoading: isLoadingExecutionData } = useQuery(
+    executionDataQueryOptions(selectedExecution?.id || ""),
+  );
 
-	// Execution data query
-	const { data: executionData, isLoading: isLoadingExecutionData } = useQuery(
-		executionDataQueryOptions(selectedExecution?.id || ""),
-	);
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === "z") {
+        e.preventDefault();
+        undo();
+      } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "z") {
+        e.preventDefault();
+        redo();
+      }
+    };
 
-	// Keyboard shortcuts for undo/redo
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === "z") {
-				e.preventDefault();
-				undo();
-			} else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "z") {
-				e.preventDefault();
-				redo();
-			}
-		};
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undo, redo]);
 
-		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [undo, redo]);
+  return {
+    // State
+    nodes,
+    edges,
+    selectedNode,
+    activeTab,
+    selectedExecution,
+    executions,
+    executionData,
 
-	return {
-		// State
-		nodes,
-		edges,
-		selectedNode,
-		activeTab,
-		selectedExecution,
-		executions,
-		executionData,
+    // Node/Edge operations
+    handleNodesChange,
+    handleEdgesChange,
+    handleNodeSelection,
+    handleNodeUpdate,
+    handleLayout,
 
-		// Node/Edge operations
-		handleNodesChange,
-		handleEdgesChange,
-		handleNodeSelection,
-		handleNodeUpdate,
-		handleLayout,
+    // Undo/Redo
+    undo,
+    redo,
+    canUndo,
+    canRedo,
 
-		// Undo/Redo
-		undo,
-		redo,
-		canUndo,
-		canRedo,
+    // Save operations
+    autoSaveEnabled,
+    toggleAutoSave,
+    hasUnsavedChanges,
+    isSaving: isSaving || saveWorkflowMutation.isPending,
+    handleManualSave,
 
-		// Save operations
-		autoSaveEnabled,
-		toggleAutoSave,
-		hasUnsavedChanges,
-		isSaving: isSaving || saveWorkflowMutation.isPending,
-		handleManualSave,
+    // Workflow execution
+    handleExecuteWorkflow,
+    isExecuting: executeWorkflowMutation.isPending,
 
-		// Workflow execution
-		handleExecuteWorkflow,
-		isExecuting: executeWorkflowMutation.isPending,
+    // UI state
+    setActiveTab,
+    setSelectedExecution,
 
-		// UI state
-		setActiveTab,
-		setSelectedExecution,
+    // Loading states
+    isLoadingExecutions,
+    isLoadingExecutionData,
 
-		// Loading states
-		isLoadingExecutions,
-		isLoadingExecutionData,
-
-		// Utilities
-		loadWorkflow,
-	};
+    // Utilities
+    loadWorkflow,
+  };
 }

@@ -1,4 +1,3 @@
-import axios from "axios";
 import type {
   Execution,
   ExecutionListResponse,
@@ -6,13 +5,15 @@ import type {
   CreateExecutionBody,
   UpdateExecutionBody,
 } from "@/lib/types";
+import api from ".";
+import type { NodeDefinition } from "./nodeDefinitions";
 
 // GET /api/executions
 export async function getExecutions(params?: {
   workflowId?: string;
   status?: string;
 }): Promise<ExecutionListResponse> {
-  const res = await axios.get("http://localhost:5001/api/executions", {
+  const res = await api.get("/executions", {
     params,
   });
   return res.data;
@@ -20,36 +21,36 @@ export async function getExecutions(params?: {
 
 // GET /api/executions/:id
 export async function getExecutionById(id: string): Promise<Execution> {
-  const res = await axios.get(`http://localhost:5001/api/executions/${id}`);
+  const res = await api.get(`/executions/${id}`);
   return res.data;
 }
 
 // GET /api/execution/data/:id
 export async function getExecutionData(
-  id: string
+  id: string,
 ): Promise<ExecutionDataResponse> {
-  const res = await axios.get(
-    `http://localhost:5001/api/executions/data/${id}`
-  );
+  const res = await api.get(`/executions/data/${id}`);
   return res.data;
 }
 
 // POST /api/executions
 export async function createExecution(
-  data: CreateExecutionBody
+  data: CreateExecutionBody,
 ): Promise<Execution> {
-  const res = await axios.post("http://localhost:5001/api/executions", data);
+  const res = await api.post("/executions", data);
   return res.data;
 }
 
 // PUT /api/executions/:id
 export async function updateExecution(
   id: string,
-  data: UpdateExecutionBody
+  data: UpdateExecutionBody,
 ): Promise<Execution> {
-  const res = await axios.put(
-    `http://localhost:5001/api/executions/${id}`,
-    data
-  );
+  const res = await api.put(`/executions/${id}`, data);
+  return res.data;
+}
+
+export async function nodeDefinition(): Promise<NodeDefinition[]> {
+  const res = await api.get("/node-definitions");
   return res.data;
 }

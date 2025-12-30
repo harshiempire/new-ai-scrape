@@ -1,8 +1,10 @@
 import express from "express";
 import { prisma } from "../lib/prisma";
 import { z } from "zod";
+import { successResponse } from "../lib/response";
+import { NotFoundError } from "../lib/errors";
 
-const exectionRouter = express.Router();
+const executionRouter = express.Router();
 
 // Schema validation
 const executionSchema = z.object({
@@ -10,118 +12,101 @@ const executionSchema = z.object({
   status: z.string(),
 });
 
+// async function hello() {
+//   try {
+//     throw new Error("Hello");
+//   } catch (error) {
+//     throw error;
+//   }
+// }
+
 // POST /api/executions
-exectionRouter.post("/", async (req, res) => {
-  try {
-    const validation = executionSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({ error: validation.error });
-    }
+executionRouter.post("/", async (req, res) => {
+  // await hello();
+  // return res.status(200).json({ message: "Hello" });
+  const validation = executionSchema.parse(req.body);
 
-    const { workflowId, status } = req.body;
+  const { workflowId, status } = validation;
 
-    // Check if workflow exists
-    const workflow = await prisma.workflow.findUnique({
-      where: { id: workflowId },
-    });
+  // Check if workflow exists
+  const workflow = await prisma.workflow.findUnique({
+    where: { id: workflowId },
+  });
 
-    if (!workflow) {
-      return res.status(404).json({ error: "Workflow not found" });
-    }
-
-    const execution = await prisma.execution.create({
-      data: {
-        workflowId,
-        status,
-      },
-    });
-
-    res.status(201).json(execution);
-  } catch (error) {
-    console.error("Error creating execution:", error);
-    res.status(500).json({ error: "Failed to create execution" });
+  if (!workflow) {
+    throw new NotFoundError("Workflow", workflowId);
   }
+
+  const execution = await prisma.execution.create({
+    data: { workflowId, status },
+  });
+
+  return successResponse(res, execution, 201);
 });
 
 // GET /api/executions
-exectionRouter.get("/", async (req, res) => {
-  try {
-    const { workflowId, status } = req.query;
+executionRouter.get("/", async (req, res) => {
+  const { workflowId, status } = req.query;
 
-    const where: any = {};
-    if (workflowId) where.workflowId = workflowId;
-    if (status) where.status = status;
+  const where: any = {};
+  if (workflowId) where.workflowId = workflowId;
+  if (status) where.status = status;
 
-    const executions = await prisma.execution.findMany({
-      where,
-      include: {
-        workflow: true,
-        executionData: true,
-      },
-    });
+  const executions = await prisma.execution.findMany({
+    where,
+    include: {
+      workflow: true,
+      executionData: true,
+    },
+  });
 
-    res.json(executions);
-  } catch (error) {
-    console.error("Error fetching executions:", error);
-    res.status(500).json({ error: "Failed to fetch executions" });
-  }
+  return successResponse(res, executions);
 });
 
 // PUT /api/executions/:id
-exectionRouter.put("/:id", async (req, res) => {
-  try {
-    const { status, completedAt, executionTime, variablePool } = req.body;
+executionRouter.put("/:id", async (req, res) => {
+  const { status, completedAt, executionTime, variablePool } = req.body;
 
-    const execution = await prisma.execution.update({
-      where: { id: req.params.id },
-      data: {
-        status,
-        completedAt: completedAt ? new Date(completedAt) : undefined,
-        executionTime,
-        executionData: variablePool
-          ? {
-              upsert: {
-                create: {
-                  initialInputs: {},
-                  variablePool,
-                },
-                update: { variablePool },
+  const execution = await prisma.execution.update({
+    where: { id: req.params.id },
+    data: {
+      status,
+      completedAt: completedAt ? new Date(completedAt) : undefined,
+      executionTime,
+      executionData: variablePool
+        ? {
+            upsert: {
+              create: {
+                initialInputs: {},
+                variablePool,
               },
-            }
-          : undefined,
-      },
-      include: {
-        executionData: true,
-      },
-    });
+              update: { variablePool },
+            },
+          }
+        : undefined,
+    },
+    include: {
+      executionData: true,
+    },
+  });
 
-    res.json(execution);
-  } catch (error) {
-    console.error("Error updating execution:", error);
-    res.status(500).json({ error: "Failed to update execution" });
-  }
+  return successResponse(res, execution);
 });
 
-// GET /api/execution/data/:id
+// GET /api/executions/data/:id
+executionRouter.get("/data/:id", async (req, res) => {
+  const executionId = req.params.id;
 
-exectionRouter.get("/data/:id", async (req, res) => {
-  try {
-    const executionId = req.params.id;
+  const execution = await prisma.execution.findFirst({
+    where: { id: executionId },
+    select: { executionData: true },
+  });
 
-    const execution = await prisma.execution.findFirst({
-      where: {
-        id: executionId,
-      },
-      select: {
-        executionData: true,
-      },
-    });
-
-    res.json(execution);
-  } catch (error) {
-    console.error("Error updating execution:", error);
-    res.status(500).json({ error: "Failed to update execution" });
+  if (!execution) {
+    throw new NotFoundError("Execution", executionId);
   }
+
+  return successResponse(res, execution);
 });
 
-export default exectionRouter;
+export default executionRouter;

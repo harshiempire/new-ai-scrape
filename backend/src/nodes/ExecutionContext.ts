@@ -1,5 +1,6 @@
 import { Node } from "./Node";
 import { Edge } from "../lib/types";
+import { prisma } from "../lib/prisma";
 
 /**
  * ExecutionContext - Central state container for workflow execution
@@ -59,7 +60,7 @@ export class ExecutionContext {
     edges: Edge[],
     initialInputs: any,
     nodes: Map<string, Node>,
-    executionDataId: string
+    executionDataId: string,
   ) {
     this.variablePool = new Map(); // EMPTY at start, populated during execution
     this.edges = edges;

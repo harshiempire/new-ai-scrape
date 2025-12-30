@@ -132,3 +132,116 @@ code {
     @apply bg-background text-foreground;
   }
 }
+
+/* RJSF Form Styling */
+.rjsf-form-container {
+  @apply bg-background;
+}
+
+.rjsf-form-container form > .form-group {
+  @apply space-y-4;
+}
+
+.rjsf-form-container .form-group {
+  @apply mb-4;
+}
+
+.rjsf-form-container .control-label {
+  @apply text-sm font-medium leading-none block mb-2;
+}
+
+.rjsf-form-container .form-control {
+  @apply flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm;
+}
+
+.rjsf-form-container select.form-control {
+  @apply appearance-none cursor-pointer;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+.rjsf-form-container .field-description {
+  @apply text-xs text-muted-foreground mt-1;
+}
+
+.rjsf-form-container .text-danger {
+  @apply text-destructive text-xs mt-1;
+}
+
+.rjsf-form-container .required {
+  @apply text-destructive ml-0.5;
+}
+
+/* Hide the submit button */
+.rjsf-form-container button[type="submit"] {
+  @apply hidden;
+}
+
+/* Checkbox styling */
+.rjsf-form-container input[type="checkbox"] {
+  @apply h-4 w-4 rounded border border-primary;
+}
+
+/* Number input styling */
+.rjsf-form-container input[type="number"] {
+  @apply [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none;
+}
+
+/* Key-value editor for additionalProperties (like headers) */
+.rjsf-form-container .field-object > .form-group {
+  @apply mb-3;
+}
+
+.rjsf-form-container .row {
+  @apply flex gap-2 items-end mb-2 flex-wrap;
+}
+
+.rjsf-form-container .col-xs-5 {
+  @apply flex-1 min-w-0;
+}
+
+.rjsf-form-container .col-xs-4 {
+  @apply flex-1 min-w-0;
+}
+
+.rjsf-form-container .col-xs-2 {
+  @apply flex-shrink-0;
+}
+
+/* Add/Remove buttons for key-value pairs */
+.rjsf-form-container .btn {
+  @apply inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded transition-colors cursor-pointer border-0;
+}
+
+.rjsf-form-container .btn-info,
+.rjsf-form-container .btn-add,
+.rjsf-form-container .btn-primary {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+.rjsf-form-container .btn-danger {
+  @apply bg-destructive text-white hover:bg-destructive/90 text-xs px-2 py-1;
+}
+
+.rjsf-form-container .array-item-toolbox {
+  @apply flex gap-1 mt-1;
+}
+
+.rjsf-form-container .array-item {
+  @apply border rounded-md p-2 mb-2;
+}
+
+/* Object field additional properties */
+.rjsf-form-container .object-property-expand {
+  @apply mt-2;
+}
+
+.rjsf-form-container .form-additional {
+  @apply space-y-2;
+}
+
+
+

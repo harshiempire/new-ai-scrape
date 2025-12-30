@@ -61,7 +61,7 @@ export function ExecutionDetails({
 
               <div>
                 <h3 className="font-medium mb-1">Initial Inputs</h3>
-                <pre className="bg-muted p-3 rounded text-xs max-h-[200px] overflow-auto">
+                <pre className="bg-muted p-3 rounded text-xs max-h-[200px] overflow-auto overflow-x-auto whitespace-pre-wrap break-words">
                   {JSON.stringify(
                     executionData?.executionData?.initialInputs,
                     null,
@@ -72,7 +72,7 @@ export function ExecutionDetails({
 
               <div>
                 <h3 className="font-medium mb-1">Variable Pool</h3>
-                <pre className="bg-muted p-3 rounded text-xs max-h-[300px] overflow-auto">
+                <pre className="bg-muted p-3 rounded text-xs max-h-[300px] overflow-auto overflow-x-auto whitespace-pre-wrap break-words">
                   {JSON.stringify(
                     executionData?.executionData?.variablePool,
                     null,

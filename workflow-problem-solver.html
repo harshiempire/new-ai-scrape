@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Template System - Problem Solver</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg-dark: #0f172a;
+            --bg-darker: #020617;
+            --bg-card: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --border: #334155;
+            --glow: rgba(59, 130, 246, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            height: 100vh;
+            max-width: 100vw;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-dark);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+        }
+
+        .sidebar-header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: white;
+        }
+
+        .sidebar-header p {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .problem-list {
+            flex: 1;
+            padding: 12px;
+        }
+
+        .problem-item {
+            padding: 16px;
+            margin-bottom: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .problem-item:hover {
+            border-color: var(--primary);
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .problem-item.active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--glow);
+        }
+
+        .problem-item.completed::before {
+            content: "✓";
+            position: absolute;
+            right: 16px;
+            top: 16px;
+            color: var(--success);
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .problem-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .problem-difficulty {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .difficulty-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .difficulty-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .difficulty-hard {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .problem-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .progress-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .progress-track {
+            width: 200px;
+            height: 8px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            transition: width 0.3s ease;
+        }
+
+        /* Split View */
+        .split-view {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            overflow: hidden;
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 12px 20px;
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--bg-darker);
+        }
+
+        .description-content {
+            max-width: 800px;
+        }
+
+        .description-content h3 {
+            font-size: 18px;
+            margin: 24px 0 12px 0;
+            color: var(--text-primary);
+        }
+
+        .description-content h4 {
+            font-size: 16px;
+            margin: 20px 0 10px 0;
+            color: var(--primary);
+        }
+
+        .description-content p {
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .description-content ul, .description-content ol {
+            margin: 12px 0 12px 24px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .description-content pre {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .description-content code {
+            background: var(--bg-card);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--primary);
+        }
+
+        .description-content pre code {
+            background: transparent;
+            padding: 0;
+        }
+
+        /* Code Editor Panel */
+        .editor-panel {
+            border-left: 1px solid var(--border);
+        }
+
+        .CodeMirror {
+            height: 100%;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Action Bar */
+        .action-bar {
+            padding: 12px 20px;
+            background: var(--bg-dark);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+        }
+
+        /* Console */
+        .console {
+            background: var(--bg-dark);
+            border-top: 1px solid var(--border);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .console-header {
+            padding: 8px 20px;
+            background: var(--bg-darker);
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .console-content {
+            padding: 12px 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .console-line {
+            margin-bottom: 4px;
+        }
+
+        .console-error {
+            color: var(--error);
+        }
+
+        .console-success {
+            color: var(--success);
+        }
+
+        .console-info {
+            color: var(--primary);
+        }
+
+        /* Hints */
+        details {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 12px 0;
+            cursor: pointer;
+        }
+
+        details summary {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        details[open] summary {
+            margin-bottom: 12px;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .panel-content > * {
+            animation: slideIn 0.3s ease;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-darker);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-card);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .split-view {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>🚀 Workflow Template System</h1>
+                <p>Master template validation & parsing</p>
+            </div>
+            <div class="problem-list" id="problemList"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="problem-header">
+                    <h2 id="currentProblemTitle">Select a problem to begin</h2>
+                </div>
+                <div class="progress-bar">
+                    <span class="progress-text" id="progressText">0 / 4 completed</span>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="split-view">
+                <!-- Description Panel -->
+                <div class="panel">
+                    <div class="panel-header">📋 Problem Description</div>
+                    <div class="panel-content">
+                        <div class="description-content" id="problemDescription">
+                            <h3>Welcome! 👋</h3>
+                            <p>Select a problem from the sidebar to start solving.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Editor Panel -->
+                <div class="panel editor-panel">
+                    <div class="panel-header">💻 Your Solution</div>
+                    <div class="panel-content" style="padding: 0;">
+                        <textarea id="codeEditor"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="console" id="console" style="display: none;">
+                <div class="console-header">Console Output</div>
+                <div class="console-content" id="consoleContent"></div>
+            </div>
+
+            <div class="action-bar">
+                <button class="btn btn-secondary" onclick="resetCode()">Reset Code</button>
+                <button class="btn btn-primary" onclick="runTests()">▶ Run Tests</button>
+                <button class="btn btn-success" onclick="submitSolution()">✓ Submit Solution</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Problem Data
+        const problems = [
+            {
+                id: 1,
+                title: "Problem 1: Unique Label Validator",
+                difficulty: "medium",
+                description: `
+                    <h3>Problem Statement</h3>
+                    <p>You are building a workflow editor where each node has a label. To enable reliable template variable references (e.g., <code>{{Start.city}}</code>), <strong>all node labels within a workflow must be unique</strong>.</p>
+                    
+                    <p>Implement a validation system that:</p>
+                    <ol>
+                        <li>Checks if a new label conflicts with existing labels</li>
+                        <li>Shows an error message when duplicate is detected</li>
+                        <li>Optionally, generates a unique label suggestion</li>
+                    </ol>
+
+                    <h4>Example 1</h4>
+                    <pre><code>Input:
+  nodes = [
+    { id: "n1", data: { label: "Start" } },
+    { id: "n2", data: { label: "Fetch Weather" } },
+    { id: "n3", data: { label: "End" } }
+  ]
+  currentNodeId = "n2"
+  newLabel = "Start"
+
+Output: 
+  { isValid: false, error: "Label 'Start' is already used by another node" }
+</code></pre>
+
+                    <h4>Constraints</h4>
+                    <ul>
+                        <li>1 ≤ nodes.length ≤ 100</li>
+                        <li>1 ≤ label.length ≤ 50</li>
+                        <li>Labels are case-sensitive ("Start" ≠ "start")</li>
+                        <li>Empty labels are invalid</li>
+                        <li>The current node should not be compared against itself</li>
+                    </ul>
+
+                    <details>
+                        <summary>💡 Hint 1: What makes a label invalid?</summary>
+                        <p>A label is invalid if:</p>
+                        <ol>
+                            <li>It's empty or only whitespace</li>
+                            <li>Another node (with different ID) has the same label</li>
+                        </ol>
+                    </details>
+
+                    <details>
+                        <summary>💡 Hint 2: Generating unique labels</summary>
+                        <p>If "API Call" exists, try "API Call 1"<br>
+                        If "API Call 1" exists, try "API Call 2"<br>
+                        ...and so on</p>
+                    </details>
+                `,
+                starterCode: `function validateLabel(newLabel, currentNodeId, nodes) {
+  // Step 1: Check for empty/whitespace
+  
+  // Step 2: Check for duplicates (excluding current node)
+  
+  // Step 3: Return result
+}
+
+function generateUniqueLabel(baseLabel, nodes) {
+  // Step 1: If baseLabel is unique, return it
+  
+  // Step 2: Otherwise, append numbers until unique
+}`,
+                tests: [
+                    {
+                        input: 'validateLabel("Start", "n2", [{ id: "n1", data: { label: "Start" } }, { id: "n2", data: { label: "Fetch Weather" } }])',
+                        expected: { isValid: false, error: "Label 'Start' is already used by another node" }
+                    },
+                    {
+                        input: 'validateLabel("New Node", "n2", [{ id: "n1", data: { label: "Start" } }])',
+                        expected: { isValid: true, error: null }
+                    },
+                    {
+                        input: 'validateLabel("", "n2", [{ id: "n1", data: { label: "Start" } }])',
+                        expected: { isValid: false, error: "Label cannot be empty" }
+                    },
+                    {
+                        input: 'generateUniqueLabel("API Call", [{ id: "n1", data: { label: "API Call" } }, { id: "n2", data: { label: "API Call 1" } }])',
+                        expected: "API Call 2"
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "Problem 2: Template Variable Extractor",
+                difficulty: "hard",
+                description: `
+                    <h3>Problem Statement</h3>
+                    <p>Given a workflow graph with nodes and edges, implement a function that finds all available template variables for a specific node.</p>
+                    
+                    <p>A node can reference variables from its <strong>upstream nodes</strong> (nodes connected via incoming edges). The variables come from each upstream node's <code>outputSchema</code>.</p>
+
+                    <h4>Example 1</h4>
+                    <pre><code>Graph:
+  [start-1] ──e1──→ [api-2] ──e2──→ [end-3]
+  
+Nodes:
+  - id: "start-1", label: "Start", outputSchema: { city: "string", lat: "number" }
+  - id: "api-2", label: "Fetch Weather", outputSchema: { temp: "number" }
+  - id: "end-3", label: "End", outputSchema: null
+
+Input: targetNodeId = "api-2"
+
+Output:
+  [
+    {
+      nodeLabel: "Start",
+      nodeId: "start-1",
+      variables: [
+        { path: "city", type: "string", fullPath: "{{Start.city}}" },
+        { path: "lat", type: "number", fullPath: "{{Start.lat}}" }
+      ]
+    }
+  ]
+</code></pre>
+
+                    <h4>Nested Schema Example</h4>
+                    <pre><code>outputSchema: {
+  status: "number",
+  data: {
+    temperature: "number",
+    location: {
+      city: "string",
+      country: "string"
+    }
+  }
+}
+
+Should extract:
+  - status
+  - data
+  - data.temperature
+  - data.location
+  - data.location.city
+  - data.location.country
+</code></pre>
+
+                    <details>
+                        <summary>💡 Hint: Finding upstream nodes</summary>
+                        <pre><code>const incomingEdges = edges.filter(e => e.target === targetNodeId);</code></pre>
+                    </details>
+
+                    <details>
+                        <summary>💡 Hint: Schema traversal</summary>
+                        <p>Use recursion! For nested objects, recurse with updated prefix.</p>
+                    </details>
+                `,
+                starterCode: `function getAvailableVariables(targetNodeId, nodes, edges) {
+  // Step 1: Find all incoming edges to targetNodeId
+  
+  // Step 2: For each incoming edge, find the source node
+  
+  // Step 3: Extract variables from source node's outputSchema
+  
+  // Step 4: Build and return TemplateSuggestion array
+}
+
+function extractVariablesFromSchema(schema, nodeLabel, prefix = "") {
+  // Base case: schema is null/undefined
+  
+  // Iterate over schema keys
+  
+  // Handle nested objects recursively
+}`,
+                tests: [
+                    {
+                        input: `getAvailableVariables("api-2", [
+                            { id: "start-1", data: { label: "Start", outputSchema: { city: "string", lat: "number" } } },
+                            { id: "api-2", data: { label: "Fetch Weather", outputSchema: { temp: "number" } } }
+                        ], [
+                            { id: "e1", source: "start-1", target: "api-2" }
+                        ])`,
+                        expected: [
+                            {
+                                nodeLabel: "Start",
+                                nodeId: "start-1",
+                                variables: [
+                                    { path: "city", type: "string", fullPath: "{{Start.city}}" },
+                                    { path: "lat", type: "number", fullPath: "{{Start.lat}}" }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 3,
+                title: "Problem 3: Template Input Parser",
+                difficulty: "medium",
+                description: `
+                    <h3>Problem Statement</h3>
+                    <p>You are building an autocomplete feature for a URL input field. When the user types <code>{{</code>, a dropdown should appear with variable suggestions.</p>
+                    
+                    <p>Implement functions to:</p>
+                    <ol>
+                        <li>Detect if the cursor is inside a template expression</li>
+                        <li>Extract the partial text being typed (for filtering)</li>
+                        <li>Insert a selected suggestion into the input</li>
+                    </ol>
+
+                    <h4>Example 1: Detection</h4>
+                    <pre><code>Input: 
+  value = "https://api.com?city={{"
+  cursorPosition = 24  (at the end)
+
+Output:
+  {
+    isInsideTemplate: true,
+    templateStart: 22,      // Index where {{ starts
+    filterText: ""          // Nothing typed after {{
+  }
+</code></pre>
+
+                    <h4>Example 2: Insertion</h4>
+                    <pre><code>Input:
+  currentValue = "https://api.com?city={{Sta"
+  cursorPosition = 27
+  selectedSuggestion = "Start.city"
+
+Output:
+  {
+    newValue: "https://api.com?city={{Start.city}}",
+    newCursorPosition = 37  // After the closing }}
+  }
+</code></pre>
+
+                    <details>
+                        <summary>💡 Hint: Finding the template</summary>
+                        <pre><code>const textBeforeCursor = value.slice(0, cursorPosition);
+const lastOpenBrace = textBeforeCursor.lastIndexOf("{{");</code></pre>
+                    </details>
+                `,
+                starterCode: `function analyzeTemplateContext(value, cursorPosition) {
+  // Step 1: Get text before cursor
+  
+  // Step 2: Find last {{ before cursor
+  
+  // Step 3: Check if there's a }} between {{ and cursor
+  
+  // Step 4: Extract filter text if inside template
+  
+  // Step 5: Return result
+}
+
+function insertSuggestion(currentValue, cursorPosition, suggestion) {
+  // Step 1: Find where {{ starts
+  
+  // Step 2: Build new value
+  
+  // Step 3: Calculate new cursor position
+  
+  // Step 4: Return result
+}`,
+                tests: [
+                    {
+                        input: 'analyzeTemplateContext("https://api.com?city={{", 24)',
+                        expected: { isInsideTemplate: true, templateStart: 22, filterText: "" }
+                    },
+                    {
+                        input: 'analyzeTemplateContext("https://api.com?city={{Sta", 27)',
+                        expected: { isInsideTemplate: true, templateStart: 22, filterText: "Sta" }
+                    },
+                    {
+                        input: 'insertSuggestion("url={{Sta", 9, "Start.city")',
+                        expected: { newValue: "url={{Start.city}}", newCursorPosition: 18 }
+                    }
+                ]
+            },
+            {
+                id: 4,
+                title: "Problem 4: React Integration",
+                difficulty: "hard",
+                description: `
+                    <h3>Problem Statement</h3>
+                    <p>Now integrate everything into a React component. Create a custom input component that:</p>
+                    
+                    <ol>
+                        <li>Uses <code>analyzeTemplateContext</code> to detect when to show suggestions</li>
+                        <li>Uses <code>getAvailableVariables</code> to get the suggestion list</li>
+                        <li>Filters suggestions based on <code>filterText</code></li>
+                        <li>Uses <code>insertSuggestion</code> to insert selected item</li>
+                        <li>Handles keyboard navigation (↑, ↓, Enter, Escape)</li>
+                    </ol>
+
+                    <h4>Behavior Specification</h4>
+                    <table>
+                        <tr><th>User Action</th><th>Expected Behavior</th></tr>
+                        <tr><td>Types <code>{{</code></td><td>Dropdown appears with all variables</td></tr>
+                        <tr><td>Presses ↓</td><td>Highlights next item</td></tr>
+                        <tr><td>Presses Enter</td><td>Inserts highlighted suggestion</td></tr>
+                        <tr><td>Presses Escape</td><td>Closes dropdown</td></tr>
+                    </table>
+
+                    <details>
+                        <summary>💡 Hint: State structure</summary>
+                        <pre><code>const [showDropdown, setShowDropdown] = useState(false);
+const [highlightedIndex, setHighlightedIndex] = useState(0);
+const [filterText, setFilterText] = useState("");
+const inputRef = useRef&lt;HTMLInputElement&gt;(null);</code></pre>
+                    </details>
+
+                    <details>
+                        <summary>💡 Hint: Keyboard handling</summary>
+                        <pre><code>const handleKeyDown = (e) => {
+  if (!showDropdown) return;
+  
+  switch (e.key) {
+    case "ArrowDown":
+      e.preventDefault();
+      setHighlightedIndex(i => (i + 1) % suggestions.length);
+      break;
+    // ... more cases
+  }
+};</code></pre>
+                    </details>
+                `,
+                starterCode: `function TemplateInput({
+  value,
+  onChange,
+  placeholder,
+  nodeId,
+  nodes,
+  edges
+}) {
+  // State
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const inputRef = useRef(null);
+  
+  // Compute suggestions
+  
+  // Filter based on filterText
+  
+  // Handle input change
+  
+  // Handle key down
+  
+  // Handle suggestion selection
+  
+  // Render
+  return (
+    <div className="relative">
+      {/* Input */}
+      
+      {/* Dropdown */}
+    </div>
+  );
+}`,
+                tests: [
+                    {
+                        input: "// This problem requires manual testing in a React environment",
+                        expected: "Component should respond to keyboard events and show/hide dropdown"
+                    }
+                ]
+            }
+        ];
+
+        // State
+        let currentProblemIndex = 0;
+        let completedProblems = new Set();
+        let editor;
+
+        // Initialize CodeMirror
+        function initEditor() {
+            editor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
+                mode: 'javascript',
+                theme: 'monokai',
+                lineNumbers: true,
+                indentUnit: 2,
+                tabSize: 2,
+                lineWrapping: true,
+                matchBrackets: true,
+                autoCloseBrackets: true
+            });
+        }
+
+        // Render problem list
+        function renderProblemList() {
+            const problemList = document.getElementById('problemList');
+            problemList.innerHTML = problems.map((problem, index) => `
+                <div class="problem-item ${index === currentProblemIndex ? 'active' : ''} ${completedProblems.has(problem.id) ? 'completed' : ''}" 
+                     onclick="selectProblem(${index})">
+                    <div class="problem-title">${problem.title}</div>
+                    <div class="problem-difficulty">
+                        <span class="difficulty-badge difficulty-${problem.difficulty}">${problem.difficulty}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Select problem
+        function selectProblem(index) {
+            currentProblemIndex = index;
+            const problem = problems[index];
+            
+            document.getElementById('currentProblemTitle').textContent = problem.title;
+            document.getElementById('problemDescription').innerHTML = problem.description;
+            editor.setValue(problem.starterCode);
+            
+            renderProblemList();
+            hideConsole();
+        }
+
+        // Update progress
+        function updateProgress() {
+            const completed = completedProblems.size;
+            const total = problems.length;
+            const percentage = (completed / total) * 100;
+            
+            document.getElementById('progressText').textContent = `${completed} / ${total} completed`;
+            document.getElementById('progressFill').style.width = `${percentage}%`;
+        }
+
+        // Console functions
+        function showConsole() {
+            document.getElementById('console').style.display = 'block';
+        }
+
+        function hideConsole() {
+            document.getElementById('console').style.display = 'none';
+        }
+
+        function clearConsole() {
+            document.getElementById('consoleContent').innerHTML = '';
+        }
+
+        function logToConsole(message, type = 'info') {
+            const consoleContent = document.getElementById('consoleContent');
+            const line = document.createElement('div');
+            line.className = `console-line console-${type}`;
+            line.textContent = message;
+            consoleContent.appendChild(line);
+            showConsole();
+        }
+
+        // Run tests
+        function runTests() {
+            clearConsole();
+            const problem = problems[currentProblemIndex];
+            const userCode = editor.getValue();
+            
+            logToConsole('Running tests...', 'info');
+            
+            try {
+                // Execute user code
+                eval(userCode);
+                
+                let passedTests = 0;
+                
+                // Run each test
+                problem.tests.forEach((test, index) => {
+                    try {
+                        const result = eval(test.input);
+                        const passed = JSON.stringify(result) === JSON.stringify(test.expected);
+                        
+                        if (passed) {
+                            logToConsole(`✓ Test ${index + 1}: PASSED`, 'success');
+                            passedTests++;
+                        } else {
+                            logToConsole(`✗ Test ${index + 1}: FAILED`, 'error');
+                            logToConsole(`  Expected: ${JSON.stringify(test.expected)}`, 'info');
+                            logToConsole(`  Got: ${JSON.stringify(result)}`, 'info');
+                        }
+                    } catch (err) {
+                        logToConsole(`✗ Test ${index + 1}: ERROR - ${err.message}`, 'error');
+                    }
+                });
+                
+                logToConsole(`\n${passedTests} / ${problem.tests.length} tests passed`, passedTests === problem.tests.length ? 'success' : 'error');
+                
+            } catch (err) {
+                logToConsole(`Syntax Error: ${err.message}`, 'error');
+            }
+        }
+
+        // Submit solution
+        function submitSolution() {
+            const problem = problems[currentProblemIndex];
+            const userCode = editor.getValue();
+            
+            clearConsole();
+            logToConsole('Submitting solution...', 'info');
+            
+            try {
+                eval(userCode);
+                
+                let allPassed = true;
+                
+                problem.tests.forEach((test, index) => {
+                    try {
+                        const result = eval(test.input);
+                        const passed = JSON.stringify(result) === JSON.stringify(test.expected);
+                        if (!passed) {
+                            allPassed = false;
+                        }
+                    } catch (err) {
+                        allPassed = false;
+                    }
+                });
+                
+                if (allPassed) {
+                    completedProblems.add(problem.id);
+                    logToConsole('🎉 Congratulations! All tests passed!', 'success');
+                    logToConsole('Solution accepted. Moving to next problem...', 'success');
+                    updateProgress();
+                    renderProblemList();
+                    
+                    setTimeout(() => {
+                        if (currentProblemIndex < problems.length - 1) {
+                            selectProblem(currentProblemIndex + 1);
+                        } else {
+                            logToConsole('\n🏆 You completed all problems! Excellent work!', 'success');
+                        }
+                    }, 2000);
+                } else {
+                    logToConsole('Some tests failed. Please fix your solution.', 'error');
+                    runTests();
+                }
+                
+            } catch (err) {
+                logToConsole(`Syntax Error: ${err.message}`, 'error');
+            }
+        }
+
+        // Reset code
+        function resetCode() {
+            const problem = problems[currentProblemIndex];
+            editor.setValue(problem.starterCode);
+            clearConsole();
+            hideConsole();
+        }
+
+        // Initialize
+        window.onload = function() {
+            initEditor();
+            renderProblemList();
+            selectProblem(0);
+            updateProgress();
+        };
+    </script>
+</body>
+</html>

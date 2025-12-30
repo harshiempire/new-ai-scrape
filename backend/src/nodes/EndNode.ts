@@ -1,5 +1,22 @@
 import { Node } from "./Node";
 import { ExecutionContext } from "./ExecutionContext";
+import type { NodeDefinitionMeta } from "./NodeDefinitionMeta";
+
+export const EndNodeMeta: NodeDefinitionMeta = {
+  type: "end",
+  label: "End",
+  description: "Marks workflow completion",
+  category: "output",
+  icon: "Flag",
+  color: "red",
+  propsSchema: {},
+  defaultProps: {},
+  validationRules: [],
+  visualConfig: {
+    handles: { inputs: true, outputs: false }, // Only input handle
+    subtitle: "Workflow completion",
+  },
+};
 
 export class EndNode extends Node {
   name = "EndNode";
@@ -34,3 +51,4 @@ export class EndNode extends Node {
     };
   }
 }
+

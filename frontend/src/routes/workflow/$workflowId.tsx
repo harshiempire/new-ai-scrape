@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDialogState } from "@/hooks/useDialogState";
 import { useWorkflowEditor } from "@/hooks/useWorkflowEditor";
@@ -37,12 +37,17 @@ function WorkflowDisplay() {
   // Dialog state for initial inputs
   const inputsDialog = useDialogState();
 
+  // Track if this is the initial load (to preserve selection on reloads)
+  const isInitialLoad = useRef(true);
+
   // Load workflow data into store on mount or workflow change
   useEffect(() => {
     const initialNodes = toReactFlowNodes(workflow.nodes);
     const initialEdges = toReactFlowEdges(workflow.edges);
-    editor.loadWorkflow(initialNodes, initialEdges);
-  }, [workflow.nodes, workflow.edges]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Preserve selection on subsequent loads (after auto-save)
+    editor.loadWorkflow(initialNodes, initialEdges, !isInitialLoad.current);
+    isInitialLoad.current = false;
+  }, [workflow.nodes, workflow.edges]);// eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="p-6 space-y-4">
@@ -90,9 +95,6 @@ function WorkflowDisplay() {
                 onNodeSelection={editor.handleNodeSelection}
               />
             </div>
-
-            {/* Right Sidebar: Property Inspector */}
-            <PropertyInspector />
           </div>
         </TabsContent>
 
@@ -118,6 +120,9 @@ function WorkflowDisplay() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Property Inspector Modal */}
+      <PropertyInspector onNodeUpdate={editor.handleNodeUpdate} />
 
       {/* Initial Inputs Dialog */}
       <InitialInputsDialog

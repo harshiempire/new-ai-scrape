@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getExecutionData } from "./api/executions";
+import { getExecutionData, nodeDefinition } from "./api/executions";
 import {
   getWorkflows,
   getWorkflowExecutions,
@@ -30,17 +30,10 @@ export const executionDataQueryOptions = (executionId: string) =>
     queryFn: () => getExecutionData(executionId),
     enabled: !!executionId,
   });
+
 export const nodeDefitionsQueryOptions = () =>
   queryOptions({
     queryKey: ["nodeDefinitions"],
-    queryFn: async () => {
-      const response = await fetch(
-        "http://localhost:5001/api/node-definitions"
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch node definitions");
-      }
-      return response.json();
-    },
+    queryFn: nodeDefinition,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

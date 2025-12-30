@@ -8,7 +8,7 @@ import { z } from "zod";
 export function validateData(
   schema: z.ZodTypeAny,
   data: any,
-  context: string
+  context: string,
 ): any {
   try {
     const validated = schema.parse(data);
@@ -18,7 +18,7 @@ export function validateData(
     if (error instanceof z.ZodError) {
       console.error(`✗ Validation failed for ${context}:`, error.issues);
       throw new Error(
-        `Validation failed for ${context}: ${JSON.stringify(error.issues)}`
+        `Validation failed for ${context}: ${JSON.stringify(error.issues)}`,
       );
     }
     throw error;
@@ -62,7 +62,11 @@ export function parseSchemaDefinition(schemaDef: any): z.ZodTypeAny {
       }
     } else if (value && typeof value === "object" && "type" in value) {
       // More complex definitions: { type: "string", optional: true }
-      const valueObj = value as { type: string; optional?: boolean };
+      const valueObj = value as {
+        type: string;
+        optional?: boolean;
+        items: any;
+      };
       let fieldSchema: z.ZodTypeAny;
 
       switch (valueObj.type) {
@@ -76,7 +80,11 @@ export function parseSchemaDefinition(schemaDef: any): z.ZodTypeAny {
           fieldSchema = z.boolean();
           break;
         case "array":
-          fieldSchema = z.array(z.any());
+          if ("items" in valueObj && valueObj.items) {
+            fieldSchema = z.array(parseSchemaDefinition(valueObj.items));
+          } else {
+            fieldSchema = z.array(z.any());
+          }
           break;
         case "object":
           fieldSchema = z.object({}).passthrough();
@@ -90,15 +98,18 @@ export function parseSchemaDefinition(schemaDef: any): z.ZodTypeAny {
       }
 
       schemaObj[key] = fieldSchema;
+    } else if (value && typeof value === "object") {
+      // Nested object (plain object, not { type: ... } format)
+      schemaObj[key] = parseSchemaDefinition(value);
     }
   }
 
-  return z.object(schemaObj);
+  return z.object(schemaObj).passthrough();
 }
 
 export function buildIndegree(
   nodes: Map<string, WorkflowNode>,
-  edges: Edge[]
+  edges: Edge[],
 ): Indegree {
   const indegree: Indegree = new Map();
 
@@ -116,7 +127,7 @@ export function buildIndegree(
 
 export function hasCycle(
   nodes: Map<string, WorkflowNode>,
-  edges: Edge[]
+  edges: Edge[],
 ): boolean {
   const indegree = buildIndegree(nodes, edges);
   const queue: string[] = [];

@@ -1,6 +1,23 @@
 import { Node } from "./Node";
 import { ExecutionContext } from "./ExecutionContext";
 import { z } from "zod";
+import type { NodeDefinitionMeta } from "./NodeDefinitionMeta";
+
+export const StartNodeMeta: NodeDefinitionMeta = {
+  type: "start",
+  label: "Start",
+  description: "Workflow entry point. Receives initial inputs.",
+  category: "trigger",
+  icon: "Play",
+  color: "green",
+  propsSchema: {}, // No configurable props
+  defaultProps: {},
+  validationRules: [],
+  visualConfig: {
+    handles: { inputs: false, outputs: true }, // Only output handle
+    subtitle: "Workflow entry point",
+  },
+};
 
 export class StartNode extends Node {
   name = "StartNode";
@@ -43,3 +60,4 @@ export class StartNode extends Node {
     };
   }
 }
+

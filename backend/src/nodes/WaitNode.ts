@@ -1,6 +1,39 @@
 import { Node } from "./Node";
 import { ExecutionContext } from "./ExecutionContext";
 import { z } from "zod";
+import type { NodeDefinitionMeta } from "./NodeDefinitionMeta";
+import { createNodePropsSchema } from "../lib/schemaBuilder";
+
+// Single source of truth: Zod schema + UI metadata
+const { zodSchema: WaitNodePropsSchema, jsonSchema: WaitNodeUISchema } = createNodePropsSchema({
+  schema: z.object({
+    duration: z.number().min(0).default(1000),
+  }),
+  ui: {
+    duration: {
+      showOnNode: true,
+      label: "Delay:",
+      format: "{value/1000}s",  // Show as seconds
+    },
+  },
+});
+
+export const WaitNodeMeta: NodeDefinitionMeta = {
+  type: "wait",
+  label: "Wait",
+  description: "Pauses workflow execution for a specified duration",
+  category: "logic",
+  icon: "Clock",
+  color: "purple",
+  propsSchema: WaitNodeUISchema,
+  defaultProps: { duration: 1000 },
+  validationRules: [
+    { field: "duration", type: "min", value: 0, message: "Duration must be positive" }
+  ],
+  visualConfig: {
+    handles: { inputs: true, outputs: true },
+  },
+};
 
 export class WaitNode extends Node {
   name = "WaitNode";
@@ -37,3 +70,4 @@ export class WaitNode extends Node {
     };
   }
 }
+

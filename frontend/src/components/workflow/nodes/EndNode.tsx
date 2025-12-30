@@ -5,21 +5,21 @@ import type { WorkflowNodeData } from "@/lib/workflow-types";
 
 // @ts-expect-error - React Flow NodeProps generic constraint issue
 export function EndNode({ data: dataUntyped, selected }: NodeProps<WorkflowNodeData>) {
-  const data = dataUntyped as WorkflowNodeData;
+	const data = dataUntyped as WorkflowNodeData;
 	return (
 		<div
 			className={cn(
-				"px-4 py-3 rounded-lg border-2 min-w-[180px] bg-white shadow-md transition-all",
-				selected ? "border-red-500 shadow-lg" : "border-red-300",
+				"px-4 py-3 rounded-lg border-2 min-w-[180px] bg-white dark:bg-slate-800 shadow-md transition-all",
+				selected ? "border-red-500 shadow-lg" : "border-red-300 dark:border-red-600",
 			)}
 		>
 			<Handle type="target" position={Position.Top} className="w-3 h-3" />
 
 			<div className="flex items-center gap-2 mb-1">
 				<Flag className="w-4 h-4 text-red-600 fill-red-600" />
-				<div className="font-semibold text-red-900">{data.label}</div>
+				<div className="font-semibold text-red-900 dark:text-red-400">{data.label}</div>
 			</div>
-			<div className="text-xs text-gray-500">Workflow completion</div>
+			<div className="text-xs text-muted-foreground">Workflow completion</div>
 		</div>
 	);
 }

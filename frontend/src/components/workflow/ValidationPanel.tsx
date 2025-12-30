@@ -45,10 +45,10 @@ export function ValidationPanel({ className }: ValidationPanelProps) {
 			</CardHeader>
 			<CardContent>
 				{errors.length === 0 ? (
-					<div className="text-sm text-gray-600">✓ No issues detected</div>
+					<div className="text-sm text-muted-foreground">✓ No issues detected</div>
 				) : (
 					<div className="space-y-2">
-						<div className="text-xs text-gray-500 mb-3">
+						<div className="text-xs text-muted-foreground mb-3">
 							{errorCount > 0 &&
 								`${errorCount} error${errorCount > 1 ? "s" : ""}`}
 							{errorCount > 0 && warningCount > 0 && ", "}
@@ -60,10 +60,9 @@ export function ValidationPanel({ className }: ValidationPanelProps) {
 								key={index}
 								className={`
                   flex items-start gap-2 p-2 rounded text-sm
-                  ${
-										error.type === "error"
-											? "bg-red-50 text-red-900"
-											: "bg-amber-50 text-amber-900"
+                  ${error.type === "error"
+										? "bg-red-50 text-red-900"
+										: "bg-amber-50 text-amber-900"
 									}
                 `}
 							>
