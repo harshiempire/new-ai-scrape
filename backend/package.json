@@ -7,7 +7,10 @@
     "build": "tsc",
     "dev": "nodemon src/routes/index.ts",
     "clean": "rm -rf dist",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "workflow",
@@ -18,21 +21,27 @@
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
+    "@types/bun": "latest",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/mustache": "^4.2.5",
     "@types/node": "^20.10.0",
+    "@types/supertest": "^6.0.3",
+    "@vitest/coverage-v8": "^4.0.16",
     "nodemon": "^3.1.11",
+    "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
-    "@types/bun": "latest"
+    "vitest": "^4.0.16"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
+    "@types/json-schema": "^7.0.15",
     "convex": "^1.28.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "json-schema": "^0.4.0",
     "mustache": "^4.2.0",
     "prisma": "^6.19.0",
     "zod": "^4.1.12",
