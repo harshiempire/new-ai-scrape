@@ -1,7 +1,7 @@
 import { ExecutionContext } from "./ExecutionContext";
 import { Edge } from "../lib/types";
 import { z } from "zod";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../prisma";
 
 export abstract class Node<TProps = Record<string, any>> {
   id: string;

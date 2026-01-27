@@ -1,6 +1,6 @@
 import { Node } from "./Node";
 import { Edge } from "../lib/types";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../prisma";
 
 /**
  * ExecutionContext - Central state container for workflow execution

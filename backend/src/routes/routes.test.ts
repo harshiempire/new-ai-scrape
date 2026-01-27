@@ -24,6 +24,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import request from "supertest";
 import app from "./app";
+import { prisma } from "../prisma";
 
 // ============================================================================
 // 📚 LESSON 1: MOCKING PRISMA FOR INTEGRATION TESTS
@@ -55,7 +56,6 @@ vi.mock("../lib/prisma", () => ({
 }));
 
 // Import after mocking!
-import { prisma } from "../lib/prisma";
 
 describe("Workflow API Integration Tests", () => {
   beforeEach(() => {
@@ -103,11 +103,11 @@ describe("Workflow API Integration Tests", () => {
         },
       ];
 
-      vi.mocked(prisma.workflow.findMany).mockResolvedValue(mockWorkflows as any);
+      vi.mocked(prisma.workflow.findMany).mockResolvedValue(
+        mockWorkflows as any,
+      );
 
-      const response = await request(app)
-        .get("/api/workflows")
-        .expect(200);
+      const response = await request(app).get("/api/workflows").expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(2);
@@ -126,7 +126,9 @@ describe("Workflow API Integration Tests", () => {
         updatedAt: new Date(),
       };
 
-      vi.mocked(prisma.workflow.findUnique).mockResolvedValue(mockWorkflow as any);
+      vi.mocked(prisma.workflow.findUnique).mockResolvedValue(
+        mockWorkflow as any,
+      );
 
       const response = await request(app)
         .get("/api/workflows/wf-123")
@@ -169,7 +171,9 @@ describe("Workflow API Integration Tests", () => {
         updatedAt: new Date(),
       };
 
-      vi.mocked(prisma.workflow.create).mockResolvedValue(createdWorkflow as any);
+      vi.mocked(prisma.workflow.create).mockResolvedValue(
+        createdWorkflow as any,
+      );
 
       const response = await request(app)
         .post("/api/workflows")
@@ -223,7 +227,9 @@ describe("Workflow API Integration Tests", () => {
         updatedAt: new Date(),
       };
 
-      vi.mocked(prisma.workflow.update).mockResolvedValue(updatedWorkflow as any);
+      vi.mocked(prisma.workflow.update).mockResolvedValue(
+        updatedWorkflow as any,
+      );
 
       const response = await request(app)
         .patch("/api/workflows/wf-123")
@@ -249,7 +255,9 @@ describe("Workflow API Integration Tests", () => {
         updatedAt: new Date(),
       };
 
-      vi.mocked(prisma.workflow.update).mockResolvedValue(updatedWorkflow as any);
+      vi.mocked(prisma.workflow.update).mockResolvedValue(
+        updatedWorkflow as any,
+      );
 
       const response = await request(app)
         .patch("/api/workflows/wf-123")
@@ -290,12 +298,10 @@ describe("Workflow API Integration Tests", () => {
     it("handles database errors gracefully", async () => {
       // Simulate database connection error
       vi.mocked(prisma.workflow.findMany).mockRejectedValue(
-        new Error("Database connection failed")
+        new Error("Database connection failed"),
       );
 
-      const response = await request(app)
-        .get("/api/workflows")
-        .expect(500);
+      const response = await request(app).get("/api/workflows").expect(500);
 
       expect(response.body.success).toBe(false);
       // Error should be caught and formatted
@@ -330,11 +336,11 @@ describe("Executions API", () => {
         { id: "exec-2", workflowId: "wf-1", status: "Running" },
       ];
 
-      vi.mocked(prisma.execution.findMany).mockResolvedValue(mockExecutions as any);
+      vi.mocked(prisma.execution.findMany).mockResolvedValue(
+        mockExecutions as any,
+      );
 
-      const response = await request(app)
-        .get("/api/executions")
-        .expect(200);
+      const response = await request(app).get("/api/executions").expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(2);
@@ -343,16 +349,14 @@ describe("Executions API", () => {
     it("filters executions by workflowId", async () => {
       vi.mocked(prisma.execution.findMany).mockResolvedValue([]);
 
-      await request(app)
-        .get("/api/executions?workflowId=wf-123")
-        .expect(200);
+      await request(app).get("/api/executions?workflowId=wf-123").expect(200);
 
       expect(prisma.execution.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             workflowId: "wf-123",
           }),
-        })
+        }),
       );
     });
   });

@@ -5,18 +5,19 @@ import type { NodeDefinitionMeta } from "./NodeDefinitionMeta";
 import { createNodePropsSchema } from "../lib/schemaBuilder";
 
 // Single source of truth: Zod schema + UI metadata
-const { zodSchema: WaitNodePropsSchema, jsonSchema: WaitNodeUISchema } = createNodePropsSchema({
-  schema: z.object({
-    duration: z.number().min(0).default(1000),
-  }),
-  ui: {
-    duration: {
-      showOnNode: true,
-      label: "Delay:",
-      format: "{value/1000}s",  // Show as seconds
+const { zodSchema: WaitNodePropsSchema, jsonSchema: WaitNodeUISchema } =
+  createNodePropsSchema({
+    schema: z.object({
+      duration: z.number().min(0).default(1000),
+    }),
+    ui: {
+      duration: {
+        showOnNode: true,
+        label: "Delay:",
+        format: "{value/1000}s", // Show as seconds
+      },
     },
-  },
-});
+  });
 
 export const WaitNodeMeta: NodeDefinitionMeta = {
   type: "wait",
@@ -28,7 +29,12 @@ export const WaitNodeMeta: NodeDefinitionMeta = {
   propsSchema: WaitNodeUISchema,
   defaultProps: { duration: 1000 },
   validationRules: [
-    { field: "duration", type: "min", value: 0, message: "Duration must be positive" }
+    {
+      field: "duration",
+      type: "min",
+      value: 0,
+      message: "Duration must be positive",
+    },
   ],
   visualConfig: {
     handles: { inputs: true, outputs: true },
@@ -57,6 +63,11 @@ export class WaitNode extends Node {
     console.log(`[WaitNode ${this.label}] Executing wait (no-op placeholder)`);
 
     // For now, WaitNode simply passes props or an optional "message" forward
+    let sum = 0;
+    for (let i = 0; i < 1_000_000_000; i++) {
+      sum += i;
+    }
+    console.log("Heavy computation done:", sum);
     const output = this.props?.output ?? this.props?.message ?? null;
     await this.sendOutput(output, context);
   }
@@ -70,4 +81,3 @@ export class WaitNode extends Node {
     };
   }
 }
-

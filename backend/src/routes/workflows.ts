@@ -2,7 +2,7 @@ import express from "express";
 import { z } from "zod";
 import { WorkflowExecutor } from "../workflow/WorkflowExecutor";
 import { WorkflowDefinition } from "../lib/types";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../prisma";
 import { successResponse } from "../lib/response";
 import { NotFoundError, ValidationError, ExecutionError } from "../lib/errors";
 
@@ -128,7 +128,10 @@ workflowRouter.post("/:id/run", async (req, res) => {
 
   const validation = runWorkflowSchema.safeParse(req.body);
   if (!validation.success) {
-    throw new ValidationError("Invalid run parameters", validation.error.issues);
+    throw new ValidationError(
+      "Invalid run parameters",
+      validation.error.issues,
+    );
   }
 
   const { id } = req.params;
@@ -204,7 +207,7 @@ workflowRouter.post("/:id/run", async (req, res) => {
     });
   } catch (error: any) {
     console.error("Error running workflow:", error);
-    
+
     if (error.nodeId !== undefined) {
       const executionData = await prisma.executionData.findFirst({
         where: { id: error.executionDataId },
@@ -221,7 +224,7 @@ workflowRouter.post("/:id/run", async (req, res) => {
             stack: error.stack,
           },
         };
-        
+
         await prisma.executionData.update({
           where: { id: error.executionDataId },
           data: {
@@ -236,7 +239,7 @@ workflowRouter.post("/:id/run", async (req, res) => {
         });
       }
     }
-    
+
     throw new ExecutionError("Failed to execute workflow", {
       originalError: error.message,
       nodeId: error.nodeId,
