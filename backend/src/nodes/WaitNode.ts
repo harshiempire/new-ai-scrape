@@ -60,14 +60,8 @@ export class WaitNode extends Node {
   }
 
   async execute(context: ExecutionContext): Promise<void> {
-    console.log(`[WaitNode ${this.label}] Executing wait (no-op placeholder)`);
-
-    // For now, WaitNode simply passes props or an optional "message" forward
-    let sum = 0;
-    for (let i = 0; i < 1_000_000_000; i++) {
-      sum += i;
-    }
-    console.log("Heavy computation done:", sum);
+    const duration = this.props?.duration ?? 1000;
+    await new Promise<void>((resolve) => setTimeout(resolve, duration));
     const output = this.props?.output ?? this.props?.message ?? null;
     await this.sendOutput(output, context);
   }

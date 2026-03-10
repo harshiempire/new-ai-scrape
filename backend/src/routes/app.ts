@@ -1,7 +1,7 @@
 /**
  * Express app configuration (separated from server for testing)
- * 
- * 💡 WHY SEPARATE?
+ *
+ * WHY SEPARATE?
  * This pattern is essential for testing. We export the app WITHOUT
  * calling .listen(), so tests can use supertest to make requests
  * without starting a real server.
@@ -23,7 +23,7 @@ app.use("/api/workflows", workflowsRouter);
 app.use("/api/executions", executionsRouter);
 app.use("/api/node-definitions", NodeDefinitionRouter);
 
-// Centralized error handling middleware
+// Centralized error handling middleware — must be registered AFTER routes
 app.use(errorHandler);
 
 export default app;

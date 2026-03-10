@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "/Users/harshithalle/new-ai-scrape/frontend",
+      "port": 3000
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "/Users/harshithalle/new-ai-scrape/backend",
+      "port": 5001
+    }
+  ]
+}

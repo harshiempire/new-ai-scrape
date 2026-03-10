@@ -4,8 +4,6 @@ import { ErrorCode, errorResponse } from "../lib/response";
 import { ZodError } from "zod";
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
-  console.error(`[Error] ${err.message}`, err.stack);
-
   if (err instanceof AppError) {
     return errorResponse(
       res,

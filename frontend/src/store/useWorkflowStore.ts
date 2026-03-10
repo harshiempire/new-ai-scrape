@@ -55,29 +55,20 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
 		})),
 
 	removeNode: (nodeId) =>
-		set((state) => {
-            console.log("I am removed");
-            return {
-                nodes: state.nodes.filter((n) => n.id !== nodeId),
-                    // Also remove connected edges
-                    edges
-            :
-                state.edges.filter(
-                    (e) => e.source !== nodeId && e.target !== nodeId,
-                ),
-                    // Clear selection if removed node was selected
-                    selectedNode
-            :
-                state.selectedNode?.id === nodeId ? null : state.selectedNode,
-                    selectedNodes
-            :
-                state.selectedNodes.filter((n) => n.id !== nodeId),
-            }
-		}),
+		set((state) => ({
+			nodes: state.nodes.filter((n) => n.id !== nodeId),
+			// Also remove connected edges
+			edges: state.edges.filter(
+				(e) => e.source !== nodeId && e.target !== nodeId,
+			),
+			// Clear selection if removed node was selected
+			selectedNode:
+				state.selectedNode?.id === nodeId ? null : state.selectedNode,
+			selectedNodes: state.selectedNodes.filter((n) => n.id !== nodeId),
+		})),
 
 	updateNode: (nodeId, updates) =>
 		set((state) => {
-            console.log("I am updated");
 			const updatedNodes = state.nodes.map((node) =>
 				node.id === nodeId
 					? { ...node, data: { ...node.data, ...updates } }
