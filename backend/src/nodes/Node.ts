@@ -129,24 +129,16 @@ export abstract class Node<TProps = Record<string, any>> {
       throw new Error("Execution data ID is missing in the context");
     }
 
-    const executionData = await prisma.executionData.findUnique({
-      where: { id: executionDataId },
-      select: { variablePool: true },
-    });
+    const patch = JSON.stringify({ [this.id]: validatedOutput });
+    const updated = await prisma.$executeRaw`
+      UPDATE execution_data
+      SET variable_pool = variable_pool || ${patch}::jsonb
+      WHERE id = ${executionDataId}
+    `;
 
-    if (!executionData) {
+    if (updated === 0) {
       throw new Error("Execution data not found");
     }
-
-    const newVariablePool = {
-      ...(executionData.variablePool as Record<string, any>),
-      [this.id]: validatedOutput,
-    };
-
-    await prisma.executionData.update({
-      where: { id: executionDataId },
-      data: { variablePool: newVariablePool },
-    });
   }
 
   /**
