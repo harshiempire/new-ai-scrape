@@ -17,6 +17,7 @@ import { WorkflowVisualEditor } from "../../components/workflow/WorkflowVisualEd
 import { PropertyInspector } from "../../components/workflow/PropertyInspector";
 import { UndoRedoControls } from "../../components/workflow/UndoRedoControls";
 import { InitialInputsDialog } from "../../components/workflow/InitialInputsDialog";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const Route = createFileRoute("/workflow/$workflowId")({
   loader: ({ context: { queryClient }, params: { workflowId } }) => {
@@ -88,12 +89,14 @@ function WorkflowDisplay() {
                 />
                 <LayoutControls onLayout={editor.handleLayout} />
               </div>
-              <WorkflowVisualEditor
-                key={workflowId}
-                onNodesChange={editor.handleNodesChange}
-                onEdgesChange={editor.handleEdgesChange}
-                onNodeSelection={editor.handleNodeSelection}
-              />
+              <ErrorBoundary title="Editor crashed">
+                <WorkflowVisualEditor
+                  key={workflowId}
+                  onNodesChange={editor.handleNodesChange}
+                  onEdgesChange={editor.handleEdgesChange}
+                  onNodeSelection={editor.handleNodeSelection}
+                />
+              </ErrorBoundary>
             </div>
           </div>
         </TabsContent>
@@ -122,7 +125,9 @@ function WorkflowDisplay() {
       </Tabs>
 
       {/* Property Inspector Modal */}
-      <PropertyInspector onNodeUpdate={editor.handleNodeUpdate} />
+      <ErrorBoundary title="Property inspector error">
+        <PropertyInspector onNodeUpdate={editor.handleNodeUpdate} />
+      </ErrorBoundary>
 
       {/* Initial Inputs Dialog */}
       <InitialInputsDialog
