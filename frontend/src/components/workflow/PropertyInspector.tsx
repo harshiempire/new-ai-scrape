@@ -15,7 +15,7 @@ import { useNodeDefinitionByType } from "@/hooks/useNodeDefinitions";
 import Form from "@rjsf/core";
 import validator from "@rjsf/validator-ajv8";
 import type { RJSFSchema, UiSchema } from "@rjsf/utils";
-import { InputSchemaDisplay, OutputSchemaEditor, TemplateTextWidget } from "./schema";
+import { InputSchemaDisplay, OutputSchemaEditor, TemplateTextWidget, JsonEditorWidget } from "./schema";
 import type { SimpleSchema } from "@/lib/schemaTypes";
 import { useMemo } from "react";
 import type { WorkflowNode } from "@/lib/workflow-types";
@@ -36,6 +36,7 @@ const baseUiSchema: UiSchema = {
 // Custom RJSF widgets with template autocomplete
 const customWidgets = {
 	templateText: TemplateTextWidget,
+	jsonEditor: JsonEditorWidget,
 };
 
 interface PropertyInspectorProps {
@@ -134,6 +135,11 @@ export function PropertyInspector({ onNodeUpdate }: PropertyInspectorProps) {
 				};
 			}
 		}
+
+		// Apply JSON editor widget to body field (defined in conditionals)
+		schemaWithTemplates.body = {
+			"ui:widget": "jsonEditor",
+		};
 
 		return schemaWithTemplates;
 	}, [currentNode, nodeDef?.propsSchema?.properties]);
