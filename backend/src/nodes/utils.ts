@@ -11,12 +11,9 @@ export function validateData(
   context: string,
 ): any {
   try {
-    const validated = schema.parse(data);
-    console.log(`✓ Validation passed for ${context}`);
-    return validated;
+    return schema.parse(data);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error(`✗ Validation failed for ${context}:`, error.issues);
       throw new Error(
         `Validation failed for ${context}: ${JSON.stringify(error.issues)}`,
       );
@@ -61,7 +58,6 @@ export function parseSchemaDefinition(schemaDef: any): z.ZodTypeAny {
           schemaObj[key] = z.any();
       }
     } else if (value && typeof value === "object" && "type" in value) {
-      // More complex definitions: { type: "string", optional: true }
       const valueObj = value as {
         type: string;
         optional?: boolean;
@@ -99,7 +95,6 @@ export function parseSchemaDefinition(schemaDef: any): z.ZodTypeAny {
 
       schemaObj[key] = fieldSchema;
     } else if (value && typeof value === "object") {
-      // Nested object (plain object, not { type: ... } format)
       schemaObj[key] = parseSchemaDefinition(value);
     }
   }

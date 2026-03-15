@@ -31,15 +31,6 @@ export const Route = createFileRoute("/")({
 });
 
 function App() {
-  // Add to any component temporarily
-  if (
-    typeof (globalThis as any).__REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined"
-  ) {
-    console.log(
-      "React Compiler Active:",
-      !!(globalThis as any).__REACT_DEVTOOLS_GLOBAL_HOOK__?.reactCompiler,
-    );
-  }
   const queryClient = useQueryClient();
   const { data: workflows } = useSuspenseQuery(workflowsQueryOptions());
   const { data: nodeDefinitions } = useSuspenseQuery(
@@ -57,15 +48,10 @@ function App() {
         description: "Deleted the workflow successfully.",
       });
     },
-
     onError: () => {
       toast("Failed to delete the Workflow", {
         description: "An error occurred while deleting the workflow.",
       });
-    },
-
-    onSettled: () => {
-      console.log("done");
     },
   });
 

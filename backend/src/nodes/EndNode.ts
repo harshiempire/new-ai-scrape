@@ -35,11 +35,9 @@ export class EndNode extends Node {
   }
 
   async execute(context: ExecutionContext) {
-    const inputs = await this.getNodeInputs(context);
-    console.log(
-      `[EndNode ${this.label}] Workflow completed with inputs:`,
-      Object.fromEntries(inputs)
-    );
+    // EndNode receives inputs but does not produce output.
+    // The variable pool already contains all upstream results.
+    await this.getNodeInputs(context);
   }
 
   toJSON(): Record<string, any> {
@@ -51,4 +49,3 @@ export class EndNode extends Node {
     };
   }
 }
-

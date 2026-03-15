@@ -20,21 +20,13 @@ export class WorkflowExecutor {
   }
 
   async execute(): Promise<void> {
-    console.log("\n📋 ========= WORKFLOW EXECUTION STARTED =========");
-    console.log(
-      "\n📥 Initial Inputs:",
-      JSON.stringify(this.initialInputs, null, 2)
-    );
-
     // Initialize nodes
     const nodes = new Map<string, Node>();
     this.workflow.nodes.forEach((nodeDef) => {
-      // Parse schema from this.workflow and pass into factory so node can initialize with it
       let schema;
       if (nodeDef.outputSchema) {
         schema = parseSchemaDefinition(nodeDef.outputSchema);
       }
-
       const node = NodeFactory.createNode(nodeDef, schema);
       nodes.set(node.id, node);
     });
@@ -43,9 +35,7 @@ export class WorkflowExecutor {
     this.workflow.edges.forEach((edge) => {
       const sourceNode = nodes.get(edge.source);
       const targetNode = nodes.get(edge.target);
-
       if (sourceNode && targetNode) {
-        // Target node's input schema for this edge = source node's output schema
         targetNode.setInputSchemaForEdge(edge.id, sourceNode.outputSchema);
       }
     });
@@ -74,28 +64,15 @@ export class WorkflowExecutor {
       throw new Error("No starting nodes found");
     }
 
-    // Execute this.workflow
+    // Execute workflow via topological order
     while (queue.length > 0) {
       const nodeId = queue.shift();
       const node = nodes.get(nodeId);
-
-      console.log(`\n--- Executing Node: ${node.label} (${node.type}) ---`);
       context.currentNodeId = nodeId;
 
       try {
-        console.log(`\n🔄 Executing Node: ${node.label} (${node.type})`);
-        console.log("━".repeat(50));
         await node.execute(context);
-        console.log(`✅ Node ${node.label} executed successfully`);
       } catch (error) {
-        console.error(`\n❌ Error executing node ${node.label}:`);
-        console.error("━".repeat(50));
-        if (error instanceof Error) {
-          console.error(`Error message: ${error.message}`);
-          console.error(`Stack trace:\n${error.stack}`);
-        } else {
-          console.error("Unknown error:", error);
-        }
         throw {
           executionDataId: this.executionDataId,
           nodeId: nodeId,
@@ -132,8 +109,5 @@ export class WorkflowExecutor {
         });
       }
     }
-
-    console.log("\n=== Workflow Execution Completed ===");
-    await context.printVariablePool(this.executionDataId);
   }
 }

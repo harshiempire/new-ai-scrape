@@ -1,6 +1,6 @@
 import { Node } from "./Node";
 import { ExecutionContext } from "./ExecutionContext";
-import z, { success } from "zod";
+import z from "zod";
 import Mustache from "mustache";
 import type { NodeDefinitionMeta } from "./NodeDefinitionMeta";
 import { createNodePropsSchema } from "../lib/schemaBuilder";
@@ -10,22 +10,17 @@ import { createNodePropsSchema } from "../lib/schemaBuilder";
  *
  * Features:
  * - Supports all HTTP methods (GET, POST, PUT, PATCH, DELETE)
- * - Dynamic URL templating using Mustache with edge-scoped variables
+ * - Dynamic URL templating using Mustache with node-label-scoped variables
  * - Headers support (static from props, dynamic from inputs)
  * - Body support for POST/PUT/PATCH
  * - Automatic JSON serialization
- * - Error handling with detailed logging
+ * - 10s request timeout via AbortController
  *
  * Props configuration:
  * - method: HTTP method (default: "GET")
- * - url: URL template with Mustache syntax (e.g., "https://api.com?city={{e1.city}}")
+ * - url: URL template with Mustache syntax (e.g., "https://api.com?city={{Start.city}}")
  * - headers: Static headers object
  * - body: Static request body (for POST/PUT/PATCH)
- *
- * Input expectations:
- * - url: Direct URL string (if props.url not provided)
- * - headers: Additional headers to merge
- * - body: Request body data
  */
 
 // Single source of truth: Zod schema + UI metadata
@@ -107,23 +102,15 @@ export class APINode extends Node<APINodeProps> {
         .object({
           data: z.any(),
         })
-        .passthrough(); // Allow additional fields
+        .passthrough();
     }
   }
 
   async execute(context: ExecutionContext): Promise<void> {
-    console.log(`\n🔄 [APINode ${this.label}] Starting execution`);
-    console.log("━".repeat(50));
-
     const inputs = await this.getNodeInputs(context);
-    console.log(
-      `📥 Input Data:`,
-      JSON.stringify(Object.fromEntries(inputs), null, 2),
-    );
 
     const templateModel: Record<string, any> = {};
     inputs.forEach((data, sourceNodeId) => {
-      // Find the source node to get its label
       const sourceNode = context.nodes?.get(sourceNodeId);
       if (sourceNode) {
         templateModel[sourceNode.label] = data;
@@ -164,13 +151,16 @@ export class APINode extends Node<APINodeProps> {
       }
     }
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+
     let responseData: any;
     try {
-      console.log(`[APINode ${this.label}] Calling ${method} ${url}`);
       const response = await fetch(url, {
         method,
         headers,
         body: body || undefined,
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -178,18 +168,14 @@ export class APINode extends Node<APINodeProps> {
       }
 
       const contentType = response.headers.get("Content-Type") || "";
-      const rawData = contentType.includes("application/json")
+      responseData = contentType.includes("application/json")
         ? await response.json()
         : await response.text();
-      // Wrap response in standard format
-      ((responseData = rawData),
-        console.log(`[APINode ${this.label}] Response received`));
-    } catch (error) {
-      console.error(`[APINode ${this.label}] Error:`, error);
-      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
 
-    await this.sendOutput(responseData, context); // Validates before sending!
+    await this.sendOutput(responseData, context);
   }
 
   toJSON(): Record<string, any> {

@@ -28,4 +28,9 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  optimizeDeps: {
+    // Force re-optimization on each dev server start to prevent stale cache issues
+    // with TanStack Router's code-split modules
+    force: true,
+  },
 })

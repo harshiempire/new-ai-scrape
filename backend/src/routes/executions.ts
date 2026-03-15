@@ -1,8 +1,8 @@
 import express from "express";
-import { prisma } from "../lib/prisma";
 import { z } from "zod";
 import { successResponse } from "../lib/response";
 import { NotFoundError } from "../lib/errors";
+import { prisma } from "../prisma";
 
 const executionRouter = express.Router();
 

@@ -1,3 +1,4 @@
+import "dotenv/config"; // MUST be first
 import dotenv from "dotenv";
 import app from "./app";
 

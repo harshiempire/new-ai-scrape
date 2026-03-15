@@ -7,15 +7,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Trash2, Plus } from "lucide-react";
-import { useRef, useState } from "react";
-import {
-  QueryClient,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createWorkflow } from "@/api/workflow";
 
 export function CreateWorkflowDialog({
@@ -29,12 +23,12 @@ export function CreateWorkflowDialog({
   const queryClient = useQueryClient();
   const { isPending, mutate, error } = useMutation({
     mutationFn: createWorkflow,
-    onSuccess: (data, variables, onMutateResult, context) => {
-      console.log({ data, variables, onMutateResult, context });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workflows"] });
       onOpenChange(false);
     },
   });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px] ">

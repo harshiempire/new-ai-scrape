@@ -11,8 +11,6 @@ import { routeTree } from "./routeTree.gen";
 import "./styles.css";
 import reportWebVitals from "./reportWebVitals.ts";
 
-// Create a new router instance
-
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext();
 const router = createRouter({
 	routeTree,
@@ -23,10 +21,6 @@ const router = createRouter({
 	scrollRestoration: true,
 	defaultStructuralSharing: true,
 	defaultPreloadStaleTime: 0,
-});
-
-router.subscribe("onLoad", (event) => {
-	console.log("Navigated to:", event.toLocation.href);
 });
 
 // Register the router instance for type safety
@@ -51,7 +45,4 @@ if (rootElement && !rootElement.innerHTML) {
 	);
 }
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();

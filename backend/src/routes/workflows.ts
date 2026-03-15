@@ -2,7 +2,7 @@ import express from "express";
 import { z } from "zod";
 import { WorkflowExecutor } from "../workflow/WorkflowExecutor";
 import { WorkflowDefinition } from "../lib/types";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../prisma";
 import { successResponse } from "../lib/response";
 import { NotFoundError, ValidationError, ExecutionError } from "../lib/errors";
 
@@ -128,29 +128,26 @@ workflowRouter.post("/:id/run", async (req, res) => {
 
   const validation = runWorkflowSchema.safeParse(req.body);
   if (!validation.success) {
-    throw new ValidationError("Invalid run parameters", validation.error.issues);
+    throw new ValidationError(
+      "Invalid run parameters",
+      validation.error.issues,
+    );
   }
 
   const { id } = req.params;
   const { initialInputs } = validation.data;
 
-  // Get workflow
-  const workflow = await prisma.workflow.findUnique({
-    where: { id },
-  });
-
+  const workflow = await prisma.workflow.findUnique({ where: { id } });
   if (!workflow) {
     throw new NotFoundError("Workflow", id);
   }
 
-  // Get next run number
   const nextRunNumber = await getNextRunNumber(id);
 
-  // Create new execution
   const execution = await prisma.execution.create({
     data: {
       workflowId: id,
-      status: `Started`,
+      status: "Started",
       runNumber: nextRunNumber,
       executionData: {
         create: {
@@ -164,15 +161,6 @@ workflowRouter.post("/:id/run", async (req, res) => {
     },
   });
 
-  console.log(
-    `\n=== Starting Workflow Execution: ${workflow.name} (Run #${nextRunNumber}) ===`,
-  );
-  console.log(`\n Execution ID: ${execution.id}`);
-  console.log(
-    `\n Execution which is created ${JSON.stringify(execution, null, 2)}`,
-  );
-
-  // Initialize workflow executor
   if (!execution.executionData || execution.executionData.id === null) {
     throw new ExecutionError("Execution data not found for the execution");
   }
@@ -184,9 +172,9 @@ workflowRouter.post("/:id/run", async (req, res) => {
       execution.executionData.id,
     );
 
-    // Execute workflow
     const result = await executor.execute();
     const endTime = Date.now();
+
     await prisma.execution.update({
       where: { id: execution.id },
       data: {
@@ -203,14 +191,10 @@ workflowRouter.post("/:id/run", async (req, res) => {
       result,
     });
   } catch (error: any) {
-    console.error("Error running workflow:", error);
-    
     if (error.nodeId !== undefined) {
       const executionData = await prisma.executionData.findFirst({
         where: { id: error.executionDataId },
-        include: {
-          execution: true,
-        },
+        include: { execution: true },
       });
 
       if (executionData) {
@@ -221,7 +205,7 @@ workflowRouter.post("/:id/run", async (req, res) => {
             stack: error.stack,
           },
         };
-        
+
         await prisma.executionData.update({
           where: { id: error.executionDataId },
           data: {
@@ -236,7 +220,7 @@ workflowRouter.post("/:id/run", async (req, res) => {
         });
       }
     }
-    
+
     throw new ExecutionError("Failed to execute workflow", {
       originalError: error.message,
       nodeId: error.nodeId,
