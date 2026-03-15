@@ -5,14 +5,14 @@
       "name": "frontend",
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "dev"],
-      "cwd": "/Users/harshithalle/new-ai-scrape/frontend",
+      "cwd": "./frontend",
       "port": 3000
     },
     {
       "name": "backend",
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "dev"],
-      "cwd": "/Users/harshithalle/new-ai-scrape/backend",
+      "cwd": "./backend",
       "port": 5001
     }
   ]

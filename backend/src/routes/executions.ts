@@ -12,18 +12,15 @@ const executionSchema = z.object({
   status: z.string(),
 });
 
-// async function hello() {
-//   try {
-//     throw new Error("Hello");
-//   } catch (error) {
-//     throw error;
-//   }
-// }
+const updateExecutionSchema = z.object({
+  status: z.string().optional(),
+  completedAt: z.string().datetime().optional(),
+  executionTime: z.number().optional(),
+  variablePool: z.record(z.string(), z.any()).optional(),
+});
 
 // POST /api/executions
 executionRouter.post("/", async (req, res) => {
-  // await hello();
-  // return res.status(200).json({ message: "Hello" });
   const validation = executionSchema.parse(req.body);
 
   const { workflowId, status } = validation;
@@ -48,9 +45,9 @@ executionRouter.post("/", async (req, res) => {
 executionRouter.get("/", async (req, res) => {
   const { workflowId, status } = req.query;
 
-  const where: any = {};
-  if (workflowId) where.workflowId = workflowId;
-  if (status) where.status = status;
+  const where: { workflowId?: string; status?: string } = {};
+  if (typeof workflowId === "string") where.workflowId = workflowId;
+  if (typeof status === "string") where.status = status;
 
   const executions = await prisma.execution.findMany({
     where,
@@ -65,7 +62,8 @@ executionRouter.get("/", async (req, res) => {
 
 // PUT /api/executions/:id
 executionRouter.put("/:id", async (req, res) => {
-  const { status, completedAt, executionTime, variablePool } = req.body;
+  const { status, completedAt, executionTime, variablePool } =
+    updateExecutionSchema.parse(req.body);
 
   const execution = await prisma.execution.update({
     where: { id: req.params.id },
@@ -78,9 +76,9 @@ executionRouter.put("/:id", async (req, res) => {
             upsert: {
               create: {
                 initialInputs: {},
-                variablePool,
+                variablePool: variablePool as any,
               },
-              update: { variablePool },
+              update: { variablePool: variablePool as any },
             },
           }
         : undefined,

@@ -71,10 +71,9 @@ export function DynamicNode({ data: dataUntyped, selected, type }: NodeProps<Wor
     const visualConfig = nodeDef.visualConfig;
 
     // Auto-infer displayFields from schema, fallback to explicit config
+    const inferredFields = inferDisplayFieldsFromSchema(nodeDef.propsSchema);
     const displayFields =
-        inferDisplayFieldsFromSchema(nodeDef.propsSchema) ||
-        visualConfig?.displayFields ||
-        [];
+        inferredFields.length > 0 ? inferredFields : (visualConfig?.displayFields ?? []);
 
     // Helper to get nested value from data
     const getValue = (path: string): any => {

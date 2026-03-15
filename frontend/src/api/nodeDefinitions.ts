@@ -44,14 +44,14 @@ export interface NodeDefinitionsResponse {
 }
 
 export async function getNodeDefinitions(): Promise<NodeDefinition[]> {
-  const res = await api.get<NodeDefinitionsResponse>("/api/node-definitions");
-  return res.data.data;
+  const res = await api.get<NodeDefinition[]>("/node-definitions");
+  return res.data;
 }
 
 export async function getNodeDefinitionByType(type: string): Promise<NodeDefinition | null> {
   try {
-    const res = await api.get<{ success: boolean; data: NodeDefinition }>(`/api/node-definitions/${type}`);
-    return res.data.data;
+    const res = await api.get<NodeDefinition>(`/node-definitions/${type}`);
+    return res.data;
   } catch {
     return null;
   }

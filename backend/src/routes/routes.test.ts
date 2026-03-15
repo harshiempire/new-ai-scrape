@@ -33,7 +33,7 @@ import { prisma } from "../prisma";
  * We mock Prisma BEFORE importing the routes.
  * This ensures all database calls go through our mock.
  */
-vi.mock("../lib/prisma", () => ({
+vi.mock("../prisma", () => ({
   prisma: {
     workflow: {
       findMany: vi.fn(),

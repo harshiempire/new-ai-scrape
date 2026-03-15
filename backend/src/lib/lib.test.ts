@@ -246,7 +246,7 @@ describe("Zod Schema Validation", () => {
  */
 
 // Mock the Prisma client
-vi.mock("./prisma", () => ({
+vi.mock("../prisma", () => ({
   prisma: {
     workflow: {
       findMany: vi.fn(),
@@ -268,7 +268,7 @@ vi.mock("./prisma", () => ({
   },
 }));
 
-import { prisma } from "./prisma";
+import { prisma } from "../prisma";
 
 describe("Prisma Mocking", () => {
   beforeEach(() => {
