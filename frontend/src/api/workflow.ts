@@ -34,7 +34,7 @@ export async function createWorkflow(name: string): Promise<Workflow> {
 
 export async function deleteWorkflowById(
   workflowId: string,
-): Promise<{ success: boolean }> {
+): Promise<{ deleted: boolean }> {
   const res = await api.delete(`/workflows/${workflowId}`);
-  return res.data.success;
+  return res.data;
 }

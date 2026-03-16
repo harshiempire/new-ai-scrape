@@ -149,7 +149,7 @@ export function PropertyInspector({ onNodeUpdate }: PropertyInspectorProps) {
 			<DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
-						<div className={`w - 3 h - 3 rounded - full ${nodeColor} `} />
+						<div className={`w-3 h-3 rounded-full ${nodeColor}`} />
 						<span className="capitalize">{nodeType}</span> Node Properties
 					</DialogTitle>
 					<DialogDescription>
@@ -166,7 +166,7 @@ export function PropertyInspector({ onNodeUpdate }: PropertyInspectorProps) {
 							</CardHeader>
 							<CardContent className="py-2">
 								<div className="flex items-center gap-2">
-									<div className={`w - 3 h - 3 rounded - full ${nodeColor} `} />
+									<div className={`w-3 h-3 rounded-full ${nodeColor}`} />
 									<span className="text-sm font-medium capitalize">
 										{nodeType}
 									</span>
