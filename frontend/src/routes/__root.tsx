@@ -3,6 +3,8 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 
 import Header from "../components/Header";
+import { Toaster } from "@/components/ui/sonner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 
@@ -16,7 +18,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: () => (
     <>
       <Header />
-      <Outlet />
+      <ErrorBoundary title="Page error">
+        <Outlet />
+      </ErrorBoundary>
       <TanStackDevtools
         config={{
           position: "bottom-right",
@@ -29,6 +33,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
           TanStackQueryDevtools,
         ]}
       />
+      <Toaster />
     </>
   ),
 });

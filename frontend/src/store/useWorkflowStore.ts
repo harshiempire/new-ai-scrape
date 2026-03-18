@@ -9,6 +9,7 @@ interface WorkflowState {
 	// UI state
 	selectedNode: WorkflowNode | null;
 	selectedNodes: WorkflowNode[];
+	editingNode: WorkflowNode | null; // Node being edited in PropertyInspector
 	activeTab: string;
 
 	// Node actions
@@ -26,13 +27,14 @@ interface WorkflowState {
 	setSelectedNode: (node: WorkflowNode | null) => void;
 	setSelectedNodes: (nodes: WorkflowNode[]) => void;
 	clearSelection: () => void;
+	setEditingNode: (node: WorkflowNode | null) => void;
 
 	// UI actions
 	setActiveTab: (tab: string) => void;
 
 	// Composite actions
 	resetWorkflow: () => void;
-	loadWorkflow: (nodes: WorkflowNode[], edges: WorkflowEdge[]) => void;
+	loadWorkflow: (nodes: WorkflowNode[], edges: WorkflowEdge[], preserveSelection?: boolean) => void;
 }
 
 export const useWorkflowStore = create<WorkflowState>((set) => ({
@@ -41,6 +43,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
 	edges: [],
 	selectedNode: null,
 	selectedNodes: [],
+	editingNode: null,
 	activeTab: "editor",
 
 	// Node actions
@@ -116,6 +119,8 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
 			selectedNodes: [],
 		}),
 
+	setEditingNode: (node) => set({ editingNode: node }),
+
 	// UI actions
 	setActiveTab: (tab) => set({ activeTab: tab }),
 
@@ -128,11 +133,12 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
 			selectedNodes: [],
 		}),
 
-	loadWorkflow: (nodes, edges) =>
+	loadWorkflow: (nodes, edges, preserveSelection = false) =>
 		set({
 			nodes,
 			edges,
-			selectedNode: null,
-			selectedNodes: [],
+			...(preserveSelection
+				? {}
+				: { selectedNode: null, selectedNodes: [] }),
 		}),
 }));

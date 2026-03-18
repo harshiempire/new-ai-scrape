@@ -25,7 +25,7 @@ export function EditorToolbar({
 }: EditorToolbarProps) {
 	return (
 		<div
-			className={`flex items-center justify-between p-3 border-b bg-white ${className}`}
+			className={`flex items-center justify-between p-3 border-b bg-card ${className}`}
 		>
 			<div className="flex items-center gap-4">
 				{/* Auto-save toggle */}
@@ -35,7 +35,7 @@ export function EditorToolbar({
 						id="auto-save-toggle"
 						checked={autoSaveEnabled}
 						onChange={(e) => onToggleAutoSave(e.target.checked)}
-						className="w-4 h-4 rounded border-gray-300"
+						className="w-4 h-4 rounded border-input accent-primary"
 					/>
 					<Label
 						htmlFor="auto-save-toggle"
@@ -54,38 +54,38 @@ export function EditorToolbar({
 				)}
 
 				{/* Saving indicator */}
-				{isSaving && <div className="text-sm text-gray-500">Saving...</div>}
+				{isSaving && <div className="text-sm text-muted-foreground">Saving...</div>}
 			</div>
 
 			{/* Action buttons */}
-		<div className="flex items-center gap-2">
-			{/* Execute button */}
-			{onExecute && (
-				<Button
-					onClick={onExecute}
-					disabled={isExecuting}
-					size="sm"
-					variant="default"
-					className="bg-green-600 hover:bg-green-700"
-				>
-					<Play className="w-4 h-4 mr-2" />
-					{isExecuting ? "Executing..." : "Execute"}
-				</Button>
-			)}
+			<div className="flex items-center gap-2">
+				{/* Execute button */}
+				{onExecute && (
+					<Button
+						onClick={onExecute}
+						disabled={isExecuting}
+						size="sm"
+						variant="default"
+						className="bg-green-600 hover:bg-green-700"
+					>
+						<Play className="w-4 h-4 mr-2" />
+						{isExecuting ? "Executing..." : "Execute"}
+					</Button>
+				)}
 
-			{/* Manual save button (only shown when auto-save is off) */}
-			{!autoSaveEnabled && (
-				<Button
-					onClick={onManualSave}
-					disabled={!hasUnsavedChanges || isSaving}
-					size="sm"
-					variant="outline"
-				>
-					<Save className="w-4 h-4 mr-2" />
-					Save Workflow
-				</Button>
-			)}
+				{/* Manual save button (only shown when auto-save is off) */}
+				{!autoSaveEnabled && (
+					<Button
+						onClick={onManualSave}
+						disabled={!hasUnsavedChanges || isSaving}
+						size="sm"
+						variant="outline"
+					>
+						<Save className="w-4 h-4 mr-2" />
+						Save Workflow
+					</Button>
+				)}
+			</div>
 		</div>
-	</div>
-);
+	);
 }

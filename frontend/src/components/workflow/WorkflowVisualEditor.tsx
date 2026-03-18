@@ -10,7 +10,7 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { type DragEvent, useCallback, useEffect, useState } from "react";
+import { type DragEvent, useCallback, useEffect, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
 
 import { generateEdgeId, generateNodeId } from "@/lib/workflow-transformer";
@@ -143,15 +143,47 @@ export function WorkflowVisualEditor({
     [reactFlowInstance, addNode]
   );
 
+  // Get current selected node from store
+  const selectedNode = useWorkflowStore((state) => state.selectedNode);
+
+  // Track whether the user explicitly clicked the pane (canvas) to deselect
+  const paneClickedRef = useRef(false);
+
+  const handlePaneClick = useCallback(() => {
+    paneClickedRef.current = true;
+  }, []);
+
   // Handle selection change
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: WorkflowNode[] }) => {
+      // If ReactFlow reports empty selection but our selected node still exists,
+      // suppress the event — it's spurious (e.g. triggered by node data updates).
+      // Exception: let it through when the user explicitly clicked the pane.
+      if (selectedNodes.length === 0 && selectedNode && !paneClickedRef.current) {
+        const nodeStillExists = storeNodes.some(n => n.id === selectedNode.id);
+        if (nodeStillExists) {
+          return; // Spurious deselect — ignore
+        }
+      }
+      paneClickedRef.current = false;
+
       setSelectedNodes(selectedNodes);
       if (onNodeSelection) {
         onNodeSelection(selectedNodes);
       }
     },
-    [setSelectedNodes, onNodeSelection]
+    [setSelectedNodes, onNodeSelection, selectedNode, storeNodes]
+  );
+
+  // Get setEditingNode from store for double-click handling
+  const setEditingNode = useWorkflowStore((state) => state.setEditingNode);
+
+  // Handle double-click on node to open PropertyInspector
+  const handleNodeDoubleClick = useCallback(
+    (_event: React.MouseEvent, node: WorkflowNode) => {
+      setEditingNode(node);
+    },
+    [setEditingNode]
   );
 
   return (
@@ -166,12 +198,14 @@ export function WorkflowVisualEditor({
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onSelectionChange={handleSelectionChange}
+        onPaneClick={handlePaneClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
         nodeTypes={nodeTypes}
         fitView
         selectionKeyCode="meta"
         multiSelectionKeyCode="meta"
-        deleteKeyCode="Delete"
-        className="bg-gray-50"
+        deleteKeyCode={["Delete", "Backspace"]}
+        className="bg-gray-50 dark:bg-slate-900"
       >
         <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
         <Controls />
@@ -190,7 +224,7 @@ export function WorkflowVisualEditor({
                 return "#e5e7eb";
             }
           }}
-          className="bg-white border-2 border-gray-200 rounded"
+          className="bg-white dark:bg-slate-900 border-2 border-border rounded"
         />
       </ReactFlow>
     </div>

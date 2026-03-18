@@ -1,4 +1,5 @@
 import type { WorkflowEdge, WorkflowNode } from "./workflow-types";
+import type { NodeDefinition, ValidationRule } from "@/api/nodeDefinitions";
 
 export interface ValidationError {
 	type: "error" | "warning";
@@ -7,12 +8,66 @@ export interface ValidationError {
 }
 
 /**
+ * Apply validation rules from node definition to a node
+ */
+function applyValidationRules(
+	node: WorkflowNode,
+	rules: ValidationRule[],
+	errors: ValidationError[]
+): void {
+	for (const rule of rules) {
+		const value = node.data.props?.[rule.field];
+		
+		switch (rule.type) {
+			case "required":
+				if (value === undefined || value === null || value === "") {
+					errors.push({
+						type: "error",
+						message: `${node.data.label}: ${rule.message}`,
+						nodeIds: [node.id],
+					});
+				}
+				break;
+			case "pattern":
+				if (value && rule.value && !new RegExp(rule.value).test(String(value))) {
+					errors.push({
+						type: "error",
+						message: `${node.data.label}: ${rule.message}`,
+						nodeIds: [node.id],
+					});
+				}
+				break;
+			case "min":
+				if (typeof value === "number" && value < rule.value) {
+					errors.push({
+						type: "error",
+						message: `${node.data.label}: ${rule.message}`,
+						nodeIds: [node.id],
+					});
+				}
+				break;
+			case "max":
+				if (typeof value === "number" && value > rule.value) {
+					errors.push({
+						type: "error",
+						message: `${node.data.label}: ${rule.message}`,
+						nodeIds: [node.id],
+					});
+				}
+				break;
+		}
+	}
+}
+
+/**
  * Validate workflow structure
  * Returns array of validation errors/warnings
+ * @param nodeDefinitions - Optional node definitions for dynamic validation rules
  */
 export function validateWorkflow(
 	nodes: WorkflowNode[],
 	edges: WorkflowEdge[],
+	nodeDefinitions?: NodeDefinition[],
 ): ValidationError[] {
 	const errors: ValidationError[] = [];
 
@@ -69,19 +124,29 @@ export function validateWorkflow(
 		});
 	}
 
-	// Check for nodes with invalid properties
-	nodes.forEach((node) => {
-		if (node.type === "api") {
-			const url = node.data.props?.url;
-			if (!url || url.trim() === "") {
-				errors.push({
-					type: "error",
-					message: `API node "${node.data.label}" missing URL`,
-					nodeIds: [node.id],
-				});
+	// Apply dynamic validation rules from node definitions
+	if (nodeDefinitions) {
+		nodes.forEach((node) => {
+			const nodeDef = nodeDefinitions.find(d => d.type === node.type);
+			if (nodeDef?.validationRules && nodeDef.validationRules.length > 0) {
+				applyValidationRules(node, nodeDef.validationRules, errors);
 			}
-		}
-	});
+		});
+	} else {
+		// Fallback: hardcoded validation for API nodes (backwards compatibility)
+		nodes.forEach((node) => {
+			if (node.type === "api") {
+				const url = node.data.props?.url;
+				if (!url || url.trim() === "") {
+					errors.push({
+						type: "error",
+						message: `API node "${node.data.label}" missing URL`,
+						nodeIds: [node.id],
+					});
+				}
+			}
+		});
+	}
 
 	return errors;
 }

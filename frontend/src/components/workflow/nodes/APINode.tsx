@@ -20,15 +20,15 @@ export function APINode({ data: dataUntyped, selected, }: NodeProps<WorkflowNode
   return (
     <div
       className={cn(
-        "px-4 py-3 rounded-lg border-2 min-w-[220px] bg-white shadow-md transition-all",
-        selected ? "border-blue-500 shadow-lg" : "border-blue-300"
+        "px-4 py-3 rounded-lg border-2 min-w-[220px] bg-white dark:bg-slate-800 shadow-md transition-all",
+        selected ? "border-blue-500 shadow-lg" : "border-blue-300 dark:border-blue-600"
       )}
     >
       <Handle type="target" position={Position.Top} className="w-3 h-3" />
 
       <div className="flex items-center gap-2 mb-2">
         <Globe className="w-4 h-4 text-blue-500" />
-        <div className="font-semibold text-blue-900">{data.label}</div>
+        <div className="font-semibold text-blue-900 dark:text-blue-400">{data.label}</div>
       </div>
 
       <div className="text-xs space-y-1">
@@ -36,12 +36,12 @@ export function APINode({ data: dataUntyped, selected, }: NodeProps<WorkflowNode
           <span
             className={cn(
               "px-1.5 py-0.5 rounded font-semibold text-[10px]",
-              methodColors[method] || "text-gray-600 bg-gray-50"
+              methodColors[method] || "text-muted-foreground bg-muted"
             )}
           >
             {method}
           </span>
-          <span className="text-gray-500 truncate flex-1" title={url}>
+          <span className="text-muted-foreground truncate flex-1" title={url}>
             {url || "No URL configured"}
           </span>
         </div>

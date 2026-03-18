@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDialogState } from "@/hooks/useDialogState";
 import { useWorkflowEditor } from "@/hooks/useWorkflowEditor";
@@ -17,6 +17,7 @@ import { WorkflowVisualEditor } from "../../components/workflow/WorkflowVisualEd
 import { PropertyInspector } from "../../components/workflow/PropertyInspector";
 import { UndoRedoControls } from "../../components/workflow/UndoRedoControls";
 import { InitialInputsDialog } from "../../components/workflow/InitialInputsDialog";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const Route = createFileRoute("/workflow/$workflowId")({
   loader: ({ context: { queryClient }, params: { workflowId } }) => {
@@ -37,12 +38,17 @@ function WorkflowDisplay() {
   // Dialog state for initial inputs
   const inputsDialog = useDialogState();
 
+  // Track if this is the initial load (to preserve selection on reloads)
+  const isInitialLoad = useRef(true);
+
   // Load workflow data into store on mount or workflow change
   useEffect(() => {
     const initialNodes = toReactFlowNodes(workflow.nodes);
     const initialEdges = toReactFlowEdges(workflow.edges);
-    editor.loadWorkflow(initialNodes, initialEdges);
-  }, [workflow.nodes, workflow.edges]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Preserve selection on subsequent loads (after auto-save)
+    editor.loadWorkflow(initialNodes, initialEdges, !isInitialLoad.current);
+    isInitialLoad.current = false;
+  }, [workflow.nodes, workflow.edges]);// eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="p-6 space-y-4">
@@ -83,16 +89,15 @@ function WorkflowDisplay() {
                 />
                 <LayoutControls onLayout={editor.handleLayout} />
               </div>
-              <WorkflowVisualEditor
-                key={workflowId}
-                onNodesChange={editor.handleNodesChange}
-                onEdgesChange={editor.handleEdgesChange}
-                onNodeSelection={editor.handleNodeSelection}
-              />
+              <ErrorBoundary title="Editor crashed">
+                <WorkflowVisualEditor
+                  key={workflowId}
+                  onNodesChange={editor.handleNodesChange}
+                  onEdgesChange={editor.handleEdgesChange}
+                  onNodeSelection={editor.handleNodeSelection}
+                />
+              </ErrorBoundary>
             </div>
-
-            {/* Right Sidebar: Property Inspector */}
-            <PropertyInspector />
           </div>
         </TabsContent>
 
@@ -118,6 +123,11 @@ function WorkflowDisplay() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Property Inspector Modal */}
+      <ErrorBoundary title="Property inspector error">
+        <PropertyInspector onNodeUpdate={editor.handleNodeUpdate} />
+      </ErrorBoundary>
 
       {/* Initial Inputs Dialog */}
       <InitialInputsDialog
