@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { nodeDefitionsQueryOptions, workflowsQueryOptions } from "@/query";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { CreateWorkflowDialog } from "@/components/workflow/CreateWorkflowDialog";
 import { Delete } from "lucide-react";
 import { deleteWorkflowById } from "@/api/workflow";
@@ -38,6 +38,7 @@ function App() {
   );
   const router = useRouter();
 
+  const deletingIdRef = useRef<string | null>(null);
   const { mutateAsync, isPending } = useMutation({
     mutationFn: deleteWorkflowById,
     onSuccess: () => {
@@ -96,10 +97,12 @@ function App() {
                     size="icon"
                     onClick={async (e) => {
                       e.stopPropagation();
-                      mutateAsync(wf.id);
+                      deletingIdRef.current = wf.id;
+                      await mutateAsync(wf.id);
+                      deletingIdRef.current = null;
                     }}
                   >
-                    {isPending ? <Spinner /> : <Delete />}
+                    {isPending && deletingIdRef.current === wf.id ? <Spinner /> : <Delete />}
                   </Button>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 </div>

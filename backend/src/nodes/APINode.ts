@@ -96,14 +96,7 @@ export class APINode extends Node<APINodeProps> {
     super({ id, label, type: "api", props, outputSchema });
     this.description = "Makes HTTP API calls";
 
-    // Only set default output schema if workflow didn't provide one
-    if (this.outputSchema === z.any()) {
-      this.outputSchema = z
-        .object({
-          data: z.any(),
-        })
-        .passthrough();
-    }
+    // Output is the raw response body (JSON or text) — no wrapper
   }
 
   async execute(context: ExecutionContext): Promise<void> {
