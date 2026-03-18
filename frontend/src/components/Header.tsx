@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
-import { Home, Menu, Network, X } from "lucide-react";
+import { Home, Menu, X } from "lucide-react";
 import { useDialogState } from "@/hooks/useDialogState";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -18,12 +18,8 @@ export default function Header() {
 					<Menu size={24} />
 				</button>
 				<h1 className="ml-4 text-xl font-semibold flex-1">
-					<Link to="/">
-						<img
-							src="/tanstack-word-logo-white.svg"
-							alt="TanStack Logo"
-							className="h-10 dark:invert-0 invert"
-						/>
+					<Link to="/" className="hover:opacity-80 transition-opacity">
+						Workflow Engine
 					</Link>
 				</h1>
 				<ThemeToggle />
@@ -57,26 +53,8 @@ export default function Header() {
 						<Home size={20} />
 						<span className="font-medium">Home</span>
 					</Link>
-
-					{/* Demo Links Start */}
-
-					<Link
-						to="/demo/tanstack-query"
-						onClick={sidebar.close}
-						className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors mb-2"
-						activeProps={{
-							className:
-								"flex items-center gap-3 p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors mb-2",
-						}}
-					>
-						<Network size={20} />
-						<span className="font-medium">TanStack Query</span>
-					</Link>
-
-					{/* Demo Links End */}
 				</nav>
 			</aside>
 		</>
 	);
 }
-

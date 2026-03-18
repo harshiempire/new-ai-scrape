@@ -21,18 +21,20 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       <ErrorBoundary title="Page error">
         <Outlet />
       </ErrorBoundary>
-      <TanStackDevtools
-        config={{
-          position: "bottom-right",
-        }}
-        plugins={[
-          {
-            name: "Tanstack Router",
-            render: <TanStackRouterDevtoolsPanel />,
-          },
-          TanStackQueryDevtools,
-        ]}
-      />
+      {import.meta.env.DEV && (
+        <TanStackDevtools
+          config={{
+            position: "bottom-right",
+          }}
+          plugins={[
+            {
+              name: "Tanstack Router",
+              render: <TanStackRouterDevtoolsPanel />,
+            },
+            TanStackQueryDevtools,
+          ]}
+        />
+      )}
       <Toaster />
     </>
   ),

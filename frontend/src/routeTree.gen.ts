@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorkflowWorkflowIdRouteImport } from './routes/workflow/$workflowId'
-import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -23,39 +22,30 @@ const WorkflowWorkflowIdRoute = WorkflowWorkflowIdRouteImport.update({
   path: '/workflow/$workflowId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
-  id: '/demo/tanstack-query',
-  path: '/demo/tanstack-query',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/workflow/$workflowId': typeof WorkflowWorkflowIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/workflow/$workflowId': typeof WorkflowWorkflowIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/workflow/$workflowId': typeof WorkflowWorkflowIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/demo/tanstack-query' | '/workflow/$workflowId'
+  fullPaths: '/' | '/workflow/$workflowId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/demo/tanstack-query' | '/workflow/$workflowId'
-  id: '__root__' | '/' | '/demo/tanstack-query' | '/workflow/$workflowId'
+  to: '/' | '/workflow/$workflowId'
+  id: '__root__' | '/' | '/workflow/$workflowId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
   WorkflowWorkflowIdRoute: typeof WorkflowWorkflowIdRoute
 }
 
@@ -75,19 +65,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkflowWorkflowIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/tanstack-query': {
-      id: '/demo/tanstack-query'
-      path: '/demo/tanstack-query'
-      fullPath: '/demo/tanstack-query'
-      preLoaderRoute: typeof DemoTanstackQueryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DemoTanstackQueryRoute: DemoTanstackQueryRoute,
   WorkflowWorkflowIdRoute: WorkflowWorkflowIdRoute,
 }
 export const routeTree = rootRouteImport

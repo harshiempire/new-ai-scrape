@@ -30,19 +30,8 @@ export function WorkflowDetails({ workflow }: WorkflowDetailsProps) {
           value={new Date(workflow.updatedAt).toLocaleString()}
         />
 
-        <div>
-          <h3 className="font-medium mb-1">Nodes</h3>
-          <pre className="bg-muted p-3 rounded text-xs overflow-auto max-h-[300px]">
-            {JSON.stringify(workflow.nodes, null, 2)}
-          </pre>
-        </div>
-
-        <div>
-          <h3 className="font-medium mb-1">Edges</h3>
-          <pre className="bg-muted p-3 rounded text-xs overflow-auto max-h-[300px]">
-            {JSON.stringify(workflow.edges, null, 2)}
-          </pre>
-        </div>
+        <Info label="Nodes" value={`${workflow.nodes?.length ?? 0} nodes`} />
+        <Info label="Connections" value={`${workflow.edges?.length ?? 0} edges`} />
       </CardContent>
     </Card>
   );

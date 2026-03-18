@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { nodeDefitionsQueryOptions, workflowsQueryOptions } from "@/query";
+import { workflowsQueryOptions } from "@/query";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
 import { CreateWorkflowDialog } from "@/components/workflow/CreateWorkflowDialog";
@@ -22,10 +22,7 @@ import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/")({
   loader: ({ context: { queryClient } }) => {
-    return Promise.all([
-      queryClient.ensureQueryData(workflowsQueryOptions()),
-      queryClient.ensureQueryData(nodeDefitionsQueryOptions()),
-    ]);
+    return queryClient.ensureQueryData(workflowsQueryOptions());
   },
   component: App,
 });
@@ -33,9 +30,6 @@ export const Route = createFileRoute("/")({
 function App() {
   const queryClient = useQueryClient();
   const { data: workflows } = useSuspenseQuery(workflowsQueryOptions());
-  const { data: nodeDefinitions } = useSuspenseQuery(
-    nodeDefitionsQueryOptions(),
-  );
   const router = useRouter();
 
   const deletingIdRef = useRef<string | null>(null);
@@ -91,21 +85,18 @@ function App() {
                 <CardTitle className="text-base font-semibold">
                   {wf.name}
                 </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      deletingIdRef.current = wf.id;
-                      await mutateAsync(wf.id);
-                      deletingIdRef.current = null;
-                    }}
-                  >
-                    {isPending && deletingIdRef.current === wf.id ? <Spinner /> : <Delete />}
-                  </Button>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    deletingIdRef.current = wf.id;
+                    await mutateAsync(wf.id);
+                    deletingIdRef.current = null;
+                  }}
+                >
+                  {isPending && deletingIdRef.current === wf.id ? <Spinner /> : <Delete />}
+                </Button>
               </div>
 
               <CardDescription className="text-xs mt-1 text-muted-foreground">
@@ -122,21 +113,7 @@ function App() {
           </Card>
         ))}
       </div>
-      <div className="mt-12">
-        <h2 className="text-2xl font-semibold mb-6 tracking-tight">
-          Node Definitions
-        </h2>
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Nodes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm">
-              {JSON.stringify(nodeDefinitions, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
-      </div>
+
       {showCreateWorkflowDialog && (
         <CreateWorkflowDialog
           open={showCreateWorkflowDialog}
