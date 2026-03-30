@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    /* Base Options */
+    "target": "es2022",
+    "lib": ["es2022", "esnext", "dom"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+
+    /* Strict Type Checking */
+    "strict": false,
+    "skipLibCheck": true,
+
+    /* Module Resolution */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Advanced Features */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "downlevelIteration": true,
+
+    /* Emit */
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "sourceMap": true,
+
+    /* Additional Checks */
+    "noImplicitAny": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+  },
+  "include": [
+    "src/**/*",
+    "src/prisma.config.ts", // Recommended to include the new Prisma 7 config file
+  ],
+  "exclude": ["node_modules", "dist"],
+}
