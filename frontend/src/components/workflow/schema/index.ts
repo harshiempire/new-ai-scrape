@@ -5,4 +5,5 @@ export { InputSchemaDisplay } from "./InputSchemaDisplay";
 export { TemplateInput } from "./TemplateInput";
 export { TemplateTextWidget } from "./TemplateTextWidget";
 export { JsonEditorWidget } from "./JsonEditorWidget";
+export { KeyValueEditor, KeyValueWidget } from "./KeyValueWidget";
 

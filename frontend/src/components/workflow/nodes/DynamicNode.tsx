@@ -134,7 +134,7 @@ export function DynamicNode({ data: dataUntyped, selected, type }: NodeProps<Wor
                         key={index}
                         className={cn(
                             "text-muted-foreground text-xs",
-                            field.truncate && "truncate flex-1"
+                            field.truncate && "truncate min-w-0"
                         )}
                         title={field.truncate ? String(value) : undefined}
                     >
@@ -147,7 +147,7 @@ export function DynamicNode({ data: dataUntyped, selected, type }: NodeProps<Wor
     return (
         <div
             className={cn(
-                "px-4 py-3 rounded-lg border-2 min-w-[180px] bg-white dark:bg-slate-800 shadow-md transition-all",
+                "px-4 py-3 rounded-lg border-2 min-w-[180px] max-w-[360px] bg-white dark:bg-slate-800 shadow-md transition-all",
                 selected ? colorClasses.selectedBorder : colorClasses.border
             )}
         >
@@ -172,7 +172,7 @@ export function DynamicNode({ data: dataUntyped, selected, type }: NodeProps<Wor
             )}
 
             {displayFields.length > 0 && (
-                <div className="text-xs flex items-center gap-1.5">
+                <div className="text-xs flex items-center gap-1.5 min-w-0">
                     {displayFields.map((field, idx) => renderDisplayField(field, idx))}
                 </div>
             )}

@@ -77,6 +77,20 @@ export const APINodeMeta: NodeDefinitionMeta = {
 
 export type APINodeProps = z.infer<typeof APINodePropsSchema>;
 
+/**
+ * Normalize Mustache templates: convert [N] bracket array notation to .N dot notation.
+ * Mustache.js resolves paths via dots — e.g. results[0].lat must be results.0.lat
+ * Example: "{{node.results[0].latitude}}" → "{{node.results.0.latitude}}"
+ */
+function normalizeMustache(template: string): string {
+  return template.replace(/\{\{([^}]*)\}\}/g, (_, name) =>
+    `{{${name
+      .replace(/\[(\d+)\]/g, ".$1") // [0] → .0  (explicit index)
+      .replace(/\[\]/g, ".0")        // []  → .0  (array-item path notation)
+    }}}`
+  );
+}
+
 export class APINode extends Node<APINodeProps> {
   static propsSchema = APINodePropsSchema;
   name = "APINode";
@@ -113,12 +127,16 @@ export class APINode extends Node<APINodeProps> {
     const method = (this.props.method || "GET").toUpperCase();
     let url = this.props.url;
     if (url) {
-      url = Mustache.render(url, templateModel);
+      url = Mustache.render(normalizeMustache(url), templateModel);
     } else {
       throw new Error(`APINode [${this.label}] requires a URL`);
     }
 
-    let headers: Record<string, string> = { ...(this.props.headers || {}) };
+    // Merge static props headers (Mustache-rendered) + dynamic input headers
+    let headers: Record<string, string> = {};
+    for (const [key, val] of Object.entries(this.props.headers || {})) {
+      headers[key] = Mustache.render(normalizeMustache(val), templateModel);
+    }
     inputs.forEach((data) => {
       if (data.headers) {
         headers = { ...headers, ...data.headers };
@@ -134,6 +152,17 @@ export class APINode extends Node<APINodeProps> {
             body = data.body;
             break;
           }
+        }
+      }
+      // Apply Mustache templating to body (supports {{NodeLabel.field}} in string bodies
+      // and in JSON string values when the body is serialized)
+      if (body) {
+        const bodyStr = typeof body === "string" ? body : JSON.stringify(body);
+        const rendered = Mustache.render(normalizeMustache(bodyStr), templateModel);
+        try {
+          body = JSON.parse(rendered);
+        } catch {
+          body = rendered;
         }
       }
       if (body && typeof body === "object") {
@@ -161,9 +190,17 @@ export class APINode extends Node<APINodeProps> {
       }
 
       const contentType = response.headers.get("Content-Type") || "";
-      responseData = contentType.includes("application/json")
-        ? await response.json()
-        : await response.text();
+      const rawText = await response.text();
+      if (contentType.includes("application/json") && rawText.trim().length > 0) {
+        try {
+          responseData = JSON.parse(rawText);
+        } catch {
+          // Response claims JSON but body is malformed — keep as raw text
+          responseData = rawText;
+        }
+      } else {
+        responseData = rawText || null;
+      }
     } finally {
       clearTimeout(timeout);
     }
